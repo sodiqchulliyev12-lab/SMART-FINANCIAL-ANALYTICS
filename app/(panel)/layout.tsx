@@ -8,6 +8,7 @@ import { Nav, type NavItem } from "./nav";
 
 const NAV: (NavItem & { admin?: boolean })[] = [
   { href: "/", label: "Risk paneli", icon: "◆" },
+  { href: "/tahlil/", label: "Moliyaviy tahlil", icon: "📊" },
   { href: "/korxonalar/", label: "Korxonalar", icon: "🏢" },
   { href: "/muddatlar/", label: "Hisobot muddatlari", icon: "🗓" },
   { href: "/xatlar/", label: "Soliq xatlari", icon: "✉" },
