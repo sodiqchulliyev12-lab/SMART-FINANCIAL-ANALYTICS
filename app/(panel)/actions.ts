@@ -269,6 +269,54 @@ export async function setLeaseStatus(f: FormData) {
   back("/ijara/", { ok: "Yangilandi" });
 }
 
+// ── Bojxona ────────────────────────────────────────────────
+export async function saveCustomsDebt(f: FormData) {
+  const u = await requireUser();
+  const cid = await companyGuard(u, int(f, "company_id"), "/bojxona/");
+  const summa = parseMoney(f.get("summa"));
+  if (Number.isNaN(summa) || summa < 0) back("/bojxona/", { xato: "Qarz summasini to'g'ri kiriting (qarz yo'q bo'lsa 0)" });
+  const row = { company_id: cid, summa, tafsilot: str(f, "tafsilot", 1000), tekshirildi: new Date().toISOString().slice(0, 10), manba: "qolda" };
+  const sql = db();
+  await sql`INSERT INTO customs_debts ${sql(row)} ON CONFLICT (company_id) DO UPDATE SET summa = EXCLUDED.summa, tafsilot = EXCLUDED.tafsilot, tekshirildi = EXCLUDED.tekshirildi, manba = 'qolda'`;
+  await audit(u.id, "bojxona_qarz", `companies:${cid}`, { summa });
+  await afterChange(cid, "/bojxona/");
+  back("/bojxona/", { ok: "Bojxona qarzi saqlandi" });
+}
+
+export async function saveContract(f: FormData) {
+  const u = await requireUser();
+  const cid = await companyGuard(u, int(f, "company_id"), "/bojxona/");
+  const raqam = str(f, "raqam", 60);
+  const sana = date(f, "sana");
+  if (!raqam || !sana) back("/bojxona/", { xato: "Shartnoma raqami va sanasini kiriting" });
+  const money = ["summa", "tolangan", "yetkazilgan"].map((k) => parseMoney(f.get(k)));
+  if (money.some((v) => Number.isNaN(v) || v < 0)) back("/bojxona/", { xato: "Summalarni to'g'ri kiriting" });
+  const row = {
+    company_id: cid, raqam, turi: str(f, "turi") === "eksport" ? "eksport" : "import",
+    kontragent: str(f, "kontragent", 200), davlat: str(f, "davlat", 60), valyuta: (str(f, "valyuta", 3) || "USD").toUpperCase(),
+    summa: money[0], tolangan: money[1], yetkazilgan: money[2], ochiq_sana: date(f, "ochiq_sana"), sana, tugash: date(f, "tugash"),
+  };
+  const { company_id: _c, raqam: _r, ...upd } = row;
+  const sql = db();
+  await sql`INSERT INTO customs_contracts ${sql(row)} ON CONFLICT (company_id, raqam) DO UPDATE SET ${sql(upd)}`;
+  await audit(u.id, "tif_shartnoma", `companies:${cid}`, row);
+  await afterChange(cid, "/bojxona/");
+  back("/bojxona/", { ok: "Shartnoma saqlandi" });
+}
+
+export async function setContractStatus(f: FormData) {
+  const u = await requireUser();
+  const id = int(f, "id");
+  const holati = str(f, "holati");
+  if (!["faol", "yopilgan", "bekor"].includes(holati)) back("/bojxona/", { xato: "Noto'g'ri holat" });
+  const [c] = await db()`SELECT company_id FROM customs_contracts WHERE id = ${id}`;
+  const cid = await companyGuard(u, c?.company_id ?? null, "/bojxona/");
+  await db()`UPDATE customs_contracts SET holati = ${holati} WHERE id = ${id}`;
+  await audit(u.id, "tif_holat", `customs_contracts:${id}`, { holati });
+  await afterChange(cid, "/bojxona/");
+  back("/bojxona/", { ok: "Yangilandi" });
+}
+
 // ── Xodimlar ───────────────────────────────────────────────
 export async function saveUser(f: FormData) {
   const u = await requireAdmin();

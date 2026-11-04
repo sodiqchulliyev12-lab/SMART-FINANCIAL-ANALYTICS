@@ -92,7 +92,7 @@ export async function riskInput(companyId: number, today = todayTashkent()): Pro
   const sql = db();
   const c = await getCompany(companyId);
   if (!c) return null;
-  const [deadlines, letters, ehf, leases, financials, bhm] = await Promise.all([
+  const [deadlines, letters, ehf, leases, financials, bhm, debt, contracts] = await Promise.all([
     sql`SELECT t.nomi AS soliq, d.davr, to_char(d.muddat,'YYYY-MM-DD') AS muddat, d.hisobot_holati, d.tolov_holati
         FROM deadlines d JOIN tax_types t ON t.code = d.soliq
         WHERE d.company_id = ${companyId} AND d.muddat <= ${iso(addDays(today, 3))}
@@ -102,6 +102,10 @@ export async function riskInput(companyId: number, today = todayTashkent()): Pro
     sql`SELECT raqam, to_char(tugash,'YYYY-MM-DD') AS tugash, holati FROM leases WHERE company_id = ${companyId} AND holati = 'faol'`,
     financialsOf(companyId),
     setting("bhm", "412000"),
+    sql`SELECT summa FROM customs_debts WHERE company_id = ${companyId}`,
+    sql`SELECT raqam, turi, kontragent, valyuta, summa, tolangan, yetkazilgan, to_char(sana,'YYYY-MM-DD') AS sana,
+               to_char(ochiq_sana,'YYYY-MM-DD') AS ochiq_sana, to_char(tugash,'YYYY-MM-DD') AS tugash, holati
+        FROM customs_contracts WHERE company_id = ${companyId} AND holati = 'faol'`,
   ]);
   return {
     today,
@@ -111,6 +115,8 @@ export async function riskInput(companyId: number, today = todayTashkent()): Pro
     letters: letters as never,
     ehf: ehf as never,
     leases: leases as never,
+    customsDebt: Number(debt[0]?.summa ?? 0),
+    contracts: contracts as never,
     financials,
   };
 }

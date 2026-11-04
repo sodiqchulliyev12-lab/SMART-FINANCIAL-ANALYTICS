@@ -43,8 +43,29 @@ export type RiskInput = {
   letters: { raqam: string; tur: string; javob_muddati: string | null; holati: string }[];
   ehf: { raqam: string; kontragent: string; sana: string; holati: string; yonalish: string; xavfli: boolean; summa: number }[];
   leases: { raqam: string; tugash: string; holati: string }[];
+  /** dep.customs.uz/qarzdor bo'yicha bojxona qarzi, so'm */
+  customsDebt?: number;
+  /** contract.customs.uz: faol tashqi savdo shartnomalari */
+  contracts?: TifContract[];
   financials: Financials[]; // davr bo'yicha o'sish tartibida
 };
+
+export type TifContract = {
+  raqam: string; turi: string; kontragent: string; valyuta: string;
+  summa: number; tolangan: number; yetkazilgan: number;
+  sana: string; ochiq_sana: string | null; tugash: string | null; holati: string;
+};
+
+/** Import avansi tovar bilan, eksport tovari pul bilan qoplanishi kerak bo'lgan odatiy muddat (kun) */
+export const TIF_SETTLE_DAYS = 180;
+
+/** Shartnoma bo'yicha qoplanmagan qism: import uchun to'langan-kelgan, eksport uchun jo'natilgan-tushgan */
+export function tifOpen(c: Pick<TifContract, "turi" | "tolangan" | "yetkazilgan">): number {
+  const d = c.turi === "eksport" ? c.yetkazilgan - c.tolangan : c.tolangan - c.yetkazilgan;
+  return d > 0.005 ? d : 0;
+}
+
+const fmtCur = (v: number, cur: string) => `${Math.round(v).toLocaleString("ru-RU").replace(/ /g, " ")} ${cur}`;
 
 /** Aylanmadan umumiy rejimga majburiy o'tish chegarasi: 01.06.2026 dan 12 000 BHM (PF-100) */
 export const TURNOVER_LIMIT_BHM = 12000;
@@ -291,6 +312,53 @@ export function assessRisk(input: RiskInput): RiskResult {
       detail: expiring.map((l) => `№${l.raqam} (${l.tugash})`).join(", "),
       points: Math.min(8, expiring.length * 4),
       tavsiya: "Ijarachi bilan uzaytirish shartlarini oldindan kelishib oling.",
+    });
+  }
+
+  // ── Bojxona ─────────────────────────────────────────────────
+  if ((input.customsDebt ?? 0) > 0) {
+    add({
+      code: "bojxona_qarz",
+      group: "soliq",
+      title: "Bojxona to'lovlari bo'yicha qarz",
+      detail: `Qarz: ${fmtSom(input.customsDebt!)} (dep.customs.uz qarzdorlar ro'yxati)`,
+      points: 20,
+      tavsiya: "Qarz yopilmaguncha tovarlarni rasmiylashtirish to'xtatilishi va penya hisoblanishi mumkin. To'lang va qarzdorlar ro'yxatidan chiqqaningizni tekshiring.",
+    });
+  }
+  const tif = (input.contracts ?? []).filter((c) => c.holati === "faol").map((c) => ({ c, open: tifOpen(c), age: daysBetween(parseIso(c.ochiq_sana ?? c.sana), today) }));
+  const tifLate = tif.filter((x) => x.open > 0 && x.age > TIF_SETTLE_DAYS);
+  const tifNear = tif.filter((x) => x.open > 0 && x.age > TIF_SETTLE_DAYS - 30 && x.age <= TIF_SETTLE_DAYS);
+  const what = (c: TifContract) => (c.turi === "eksport" ? "eksport tushumi kelmagan" : "import avansi qoplanmagan");
+  if (tifLate.length) {
+    add({
+      code: "tif_muddati_otgan",
+      group: "shartnoma",
+      title: "Tashqi savdo: muddati o'tgan debitorlik",
+      detail: tifLate.slice(0, 3).map(({ c, open, age }) => `№${c.raqam} (${c.kontragent || c.turi}): ${what(c)} ${fmtCur(open, c.valyuta)}, ${age} kun`).join("; "),
+      points: Math.min(30, tifLate.length * 20),
+      tavsiya: "Qoplanmagan summa uchun jarima qo'llanadi va korxona TIFning nohalol ishtirokchilari reyestriga kiritilishi mumkin. Kontragentdan tovar/pulni talab qiling yoki shartnoma muddatini contract.customs.uz'da uzaytiring.",
+    });
+  }
+  if (tifNear.length) {
+    add({
+      code: "tif_muddat_yaqin",
+      group: "shartnoma",
+      title: `Tashqi savdo: ${TIF_SETTLE_DAYS} kunlik muddat yaqin`,
+      detail: tifNear.slice(0, 3).map(({ c, open, age }) => `№${c.raqam}: ${what(c)} ${fmtCur(open, c.valyuta)}, ${TIF_SETTLE_DAYS - age} kun qoldi`).join("; "),
+      points: Math.min(12, tifNear.length * 6),
+      tavsiya: "Muddat tugashidan oldin tovar yetkazilishi (yoki pul tushishi) yoki shartnoma muddati uzaytirilishi kerak.",
+    });
+  }
+  const tifExpired = tif.filter((x) => x.c.tugash && daysBetween(parseIso(x.c.tugash), today) > 0);
+  if (tifExpired.length) {
+    add({
+      code: "tif_shartnoma_tugagan",
+      group: "shartnoma",
+      title: "Muddati tugagan TIF shartnomasi",
+      detail: tifExpired.slice(0, 3).map(({ c }) => `№${c.raqam} (${c.tugash})`).join(", "),
+      points: Math.min(10, tifExpired.length * 5),
+      tavsiya: "Shartnoma bo'yicha hisob-kitob tugagan bo'lsa yoping, aks holda contract.customs.uz'da qo'shimcha kelishuv bilan uzaytiring.",
     });
   }
 
