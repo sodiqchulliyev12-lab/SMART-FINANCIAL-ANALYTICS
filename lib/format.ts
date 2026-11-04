@@ -4,13 +4,14 @@ export function som(v: number | null | undefined): string {
 }
 
 /** 1 250 000 000 → "1,25 mlrd" */
-export function short(v: number): string {
+export function short(v: number, lang: "uz" | "ru" = "uz"): string {
   const a = Math.abs(v);
-  const f = (x: number) => x.toFixed(x >= 100 ? 0 : x >= 10 ? 1 : 2).replace(".", ",");
-  if (a >= 1e12) return `${f(v / 1e12)} trln`;
-  if (a >= 1e9) return `${f(v / 1e9)} mlrd`;
-  if (a >= 1e6) return `${f(v / 1e6)} mln`;
-  if (a >= 1e3) return `${f(v / 1e3)} ming`;
+  const f = (x: number) => x.toFixed(Math.abs(x) >= 100 ? 0 : Math.abs(x) >= 10 ? 1 : 2).replace(".", ",");
+  const u = lang === "ru" ? ["трлн", "млрд", "млн", "тыс."] : ["trln", "mlrd", "mln", "ming"];
+  if (a >= 1e12) return `${f(v / 1e12)} ${u[0]}`;
+  if (a >= 1e9) return `${f(v / 1e9)} ${u[1]}`;
+  if (a >= 1e6) return `${f(v / 1e6)} ${u[2]}`;
+  if (a >= 1e3) return `${f(v / 1e3)} ${u[3]}`;
   return String(Math.round(v));
 }
 

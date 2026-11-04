@@ -118,7 +118,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
               <div className="flex h-40 items-end gap-3" role="img" aria-label={t("Choraklar bo'yicha tushum va foyda")}>
                 {recent.map((f) => (
                   <div key={f.davr} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
-                    <div className="text-[11px] tabular-nums text-ink-700">{short(f.tushum)}</div>
+                    <div className="text-[11px] tabular-nums text-ink-700">{short(f.tushum, t.lang)}</div>
                     <div className="flex h-full w-full max-w-20 items-end gap-1">
                       <div className="flex-1 rounded-t bg-brand-500" style={{ height: `${Math.max(2, (Math.abs(f.tushum) / maxRev) * 100)}%` }} title={`${t("Tushum")}: ${som(f.tushum)}`} />
                       <div className={`flex-1 rounded-t ${f.sof_foyda >= 0 ? "bg-emerald-500" : "bg-red-500"}`} style={{ height: `${Math.max(2, (Math.abs(f.sof_foyda) / maxRev) * 100)}%` }} title={`${t("Sof foyda")}: ${som(f.sof_foyda)}`} />

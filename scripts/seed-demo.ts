@@ -49,7 +49,11 @@ async function main() {
     if (profile === "threshold") rows = q.map((_, i) => fin(i, { tushum: [1050, 1120, 1190, 1260][i] * M, soliq_tolangan: 0 }));
     if (profile === "declining") rows = q.map((_, i) => fin(i, { tushum: [980, 930, 870, 560][i] * M, sof_foyda: [60, 35, 12, -18][i] * M, pul: 70 * M, joriy_aktiv: 560 * M }));
     if (profile === "lease") rows = q.map((_, i) => fin(i, { tushum: 420 * M, tannarx: 300 * M, sof_foyda: 40 * M, soliq_tolangan: 17 * M }));
-    for (const r of rows) await sql`INSERT INTO financials ${sql(r)}`;
+    // Bir yil oldingi choraklar — dashboarddagi «o'tgan yil» taqqoslovi uchun
+    const hist = ["2024-Q4", "2025-Q1", "2025-Q2", "2025-Q3"].map((davr, i) => ({
+      ...rows[0], davr, tushum: Math.round(rows[0].tushum * (0.8 + i * 0.04)), sof_foyda: Math.round(rows[0].sof_foyda * 0.9), soliq_tolangan: Math.round(rows[0].soliq_tolangan * (0.85 + i * 0.03)),
+    }));
+    for (const r of [...hist, ...rows]) await sql`INSERT INTO financials ${sql(r)}`;
 
     if (profile === "taxdiscipline" || profile === "crisis") {
       await sql`INSERT INTO letters (company_id, tur, raqam, sana, mazmun, javob_muddati, manba) VALUES
