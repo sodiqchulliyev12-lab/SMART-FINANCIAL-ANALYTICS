@@ -65,3 +65,24 @@ test("daraja chegaralari", () => {
   assert.equal(levelOf(50), "yuqori");
   assert.equal(levelOf(75), "kritik");
 });
+
+test("bojxona: qarz va 180 kunlik TIF debitorligi", () => {
+  const c = (o: Partial<import("../lib/risk").TifContract>) => ({
+    raqam: "K1", turi: "import", kontragent: "Foreign LLC", valyuta: "USD", summa: 100000, tolangan: 50000, yetkazilgan: 20000,
+    sana: "2026-01-10", ochiq_sana: null, tugash: null, holati: "faol", ...o,
+  });
+  const r = assessRisk(empty({
+    customsDebt: 3_500_000,
+    contracts: [
+      c({}), // import, 30 000 USD qoplanmagan, 298 kun
+      c({ raqam: "K2", turi: "eksport", tolangan: 10000, yetkazilgan: 10000, sana: "2026-01-01" }), // qoplangan
+      c({ raqam: "K3", turi: "eksport", tolangan: 0, yetkazilgan: 5000, sana: "2026-05-01", ochiq_sana: "2026-05-20" }), // 168 kun
+      c({ raqam: "K4", tolangan: 0, yetkazilgan: 0, sana: "2025-12-01", tugash: "2026-10-31" }), // tugagan
+    ],
+  }));
+  const codes = r.factors.map((f) => f.code);
+  for (const x of ["bojxona_qarz", "tif_muddati_otgan", "tif_muddat_yaqin", "tif_shartnoma_tugagan"]) assert.ok(codes.includes(x), x);
+  const late = r.factors.find((f) => f.code === "tif_muddati_otgan")!;
+  assert.equal(late.points, 20, "faqat K1 muddati o'tgan");
+  assert.match(late.detail, /30\s000 USD/);
+});

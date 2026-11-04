@@ -1,4 +1,4 @@
-// Soliq Monitor (my.soliq.uz, Didox, ijara.soliq.uz'ni tekshiruvchi tashqi dastur) shu manzilga natija yuboradi.
+// Soliq Monitor (my.soliq.uz, Didox, ijara.soliq.uz va customs.uz saytlarini tekshiruvchi tashqi dastur) shu manzilga natija yuboradi.
 // Avtorizatsiya: "Authorization: Bearer <MONITOR_KEY>". Korxona STIR bo'yicha topiladi.
 import { timingSafeEqual } from "node:crypto";
 import { audit, db } from "@/lib/db";
@@ -10,6 +10,16 @@ export const dynamic = "force-dynamic";
 type Letter = { stir: string; tur?: string; raqam: string; sana: string; mazmun?: string; javob_muddati?: string | null };
 type Ehf = { stir: string; raqam: string; kontragent?: string; kontragent_stir?: string; summa?: number; sana: string; yonalish?: string; holati?: string; xavfli?: boolean };
 type Lease = { stir: string; raqam: string; tomon?: string; boshlanish: string; tugash: string; holati?: string };
+type CustomsDebt = { stir: string; summa: number; tafsilot?: string; sana?: string };
+type Contract = {
+  stir: string; raqam: string; turi?: string; kontragent?: string; davlat?: string; valyuta?: string;
+  summa?: number; tolangan?: number; yetkazilgan?: number; ochiq_sana?: string | null; sana: string; tugash?: string | null; holati?: string;
+};
+type Declaration = {
+  stir: string; raqam: string; sana: string; rejim?: string; turi?: string; shartnoma?: string;
+  valyuta?: string; summa?: number; boj_tolov?: number; holati?: string;
+};
+const num = (v: unknown) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
 const isDate = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
 const s = (v: unknown, max = 300) => String(v ?? "").trim().slice(0, max);
@@ -25,7 +35,10 @@ function authorized(req: Request): boolean {
 
 export async function POST(req: Request) {
   if (!authorized(req)) return Response.json({ ok: false, error: "forbidden" }, { status: 403 });
-  let body: { letters?: Letter[]; ehf?: Ehf[]; leases?: Lease[] };
+  let body: {
+    letters?: Letter[]; ehf?: Ehf[]; leases?: Lease[];
+    bojxona_qarz?: CustomsDebt[]; tif_shartnomalar?: Contract[]; deklaratsiyalar?: Declaration[];
+  };
   try {
     body = await req.json();
   } catch {
@@ -72,6 +85,44 @@ export async function POST(req: Request) {
       ON CONFLICT (company_id, raqam) DO UPDATE SET tomon = EXCLUDED.tomon, boshlanish = EXCLUDED.boshlanish, tugash = EXCLUDED.tugash, holati = EXCLUDED.holati`;
     touched.add(id);
   }
+  // Bojxona: qarz (summa 0 = qarz yo'q, ya'ni tekshirildi va toza)
+  for (const d of (body.bojxona_qarz ?? []).slice(0, 2000)) {
+    const id = cid(d.stir);
+    if (!id) continue;
+    const sana = isDate(d.sana) ? d.sana : new Date().toISOString().slice(0, 10);
+    await sql`INSERT INTO customs_debts (company_id, summa, tafsilot, tekshirildi, manba)
+      VALUES (${id}, ${Math.max(0, num(d.summa))}, ${s(d.tafsilot, 1000)}, ${sana}, 'monitor')
+      ON CONFLICT (company_id) DO UPDATE SET summa = EXCLUDED.summa, tafsilot = EXCLUDED.tafsilot, tekshirildi = EXCLUDED.tekshirildi, manba = 'monitor'`;
+    touched.add(id);
+  }
+  for (const c of (body.tif_shartnomalar ?? []).slice(0, 5000)) {
+    const id = cid(c.stir);
+    if (!id || !c.raqam || !isDate(c.sana)) continue;
+    const holati = ["faol", "yopilgan", "bekor"].includes(String(c.holati)) ? String(c.holati) : "faol";
+    const row = {
+      company_id: id, raqam: s(c.raqam, 60), turi: c.turi === "eksport" ? "eksport" : "import",
+      kontragent: s(c.kontragent, 200), davlat: s(c.davlat, 60), valyuta: s(c.valyuta, 3).toUpperCase() || "USD",
+      summa: num(c.summa), tolangan: num(c.tolangan), yetkazilgan: num(c.yetkazilgan),
+      ochiq_sana: isDate(c.ochiq_sana) ? c.ochiq_sana : null, sana: c.sana, tugash: isDate(c.tugash) ? c.tugash : null, holati, manba: "monitor",
+    };
+    const { company_id: _c, raqam: _r, ...upd } = row;
+    await sql`INSERT INTO customs_contracts ${sql(row)} ON CONFLICT (company_id, raqam) DO UPDATE SET ${sql(upd)}`;
+    touched.add(id);
+  }
+  for (const d of (body.deklaratsiyalar ?? []).slice(0, 10000)) {
+    const id = cid(d.stir);
+    if (!id || !d.raqam || !isDate(d.sana)) continue;
+    const row = {
+      company_id: id, raqam: s(d.raqam, 60), sana: d.sana, rejim: s(d.rejim, 20),
+      turi: ["import", "eksport"].includes(String(d.turi)) ? String(d.turi) : "boshqa", shartnoma: s(d.shartnoma, 60),
+      valyuta: s(d.valyuta, 3).toUpperCase() || "USD", summa: num(d.summa), boj_tolov: num(d.boj_tolov),
+      holati: s(d.holati, 40) || "rasmiylashtirildi", manba: "monitor",
+    };
+    const { company_id: _c, raqam: _r, ...upd } = row;
+    await sql`INSERT INTO customs_declarations ${sql(row)} ON CONFLICT (company_id, raqam) DO UPDATE SET ${sql(upd)}`;
+    touched.add(id);
+  }
+
   for (const id of touched) await recomputeRisk(id);
   await audit(null, "monitor", "api", { korxonalar: touched.size, yangi_xatlar: newLetters.length, topilmagan: [...new Set(skipped)].slice(0, 20) });
   if (newLetters.length) await notifyNewLetters(newLetters).catch((e) => console.error("[monitor] xabar yuborilmadi:", e));
