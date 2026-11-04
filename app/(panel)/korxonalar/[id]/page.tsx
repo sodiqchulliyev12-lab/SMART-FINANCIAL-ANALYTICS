@@ -5,7 +5,9 @@ import { db } from "@/lib/db";
 import { financialsOf, getCompany, recomputeRisk, riskHistory, taxTypes } from "@/lib/data";
 import { FIN_FIELDS, RATIO_META, fmtRatio, quarterOf, ratios } from "@/lib/finance";
 import { dateUz, short, som } from "@/lib/format";
-import { GROUP_LABEL, type RiskGroup } from "@/lib/risk";
+import { groupLabel, type RiskGroup } from "@/lib/risk";
+import { getT } from "@/lib/i18n";
+import { factorText } from "@/lib/i18n-risk";
 import { REGIMES, iso, periodHuman, todayTashkent } from "@/lib/tax-calendar";
 import { AddBox, Card, Notice, PageTitle, Pill, ScoreRing, Sparkline, Table } from "@/components/ui";
 import { CompanyForm } from "@/components/CompanyForm";
@@ -24,6 +26,8 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
   const sp = await searchParams;
   const sql = db();
   const today = todayTashkent();
+  const t = await getT();
+  const L = t.lang;
 
   const [risk, fin, history, deadlines, letters, types, linked, staff] = await Promise.all([
     recomputeRisk(id, today),
@@ -50,8 +54,8 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
     <>
       <PageTitle
         title={c.nomi}
-        sub={<>STIR {c.stir} · {REGIMES[c.rejim]} · mas&apos;ul: {c.masul ?? "—"}{c.arxiv && <> · <Pill tone="warn">arxivda</Pill></>}</>}
-        right={<Link href="/korxonalar/" className="btn-ghost">← Ro&apos;yxat</Link>}
+        sub={<>{t("STIR")} {c.stir} · {t(REGIMES[c.rejim] ?? c.rejim)} · {t("mas'ul")}: {c.masul ?? "—"}{c.arxiv && <> · <Pill tone="warn">arxivda</Pill></>}</>}
+        right={<Link href="/korxonalar/" className="btn-ghost">← {t("Ro'yxat")}</Link>}
       />
       {sp.ok && <Notice>{sp.ok}</Notice>}
       {sp.xato && <Notice kind="err">{sp.xato}</Notice>}
@@ -62,27 +66,27 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
           <ScoreRing score={r.score} />
           <div className="mt-3 grid w-full grid-cols-2 gap-x-4 gap-y-1 text-left text-xs">
             {(Object.keys(r.byGroup) as RiskGroup[]).map((g) => (
-              <div key={g} className="flex justify-between"><span className="text-ink-500">{GROUP_LABEL[g]}</span><b className="tabular-nums">{r.byGroup[g]}</b></div>
+              <div key={g} className="flex justify-between"><span className="text-ink-500">{groupLabel(g, L)}</span><b className="tabular-nums">{r.byGroup[g]}</b></div>
             ))}
           </div>
           <div className="mt-4 w-full text-left">
-            <div className="mb-1 text-xs text-ink-500">90 kunlik tarix</div>
+            <div className="mb-1 text-xs text-ink-500">{t("90 kunlik tarix")}</div>
             <Sparkline points={history} />
           </div>
         </Card>
         <Card title="Risk omillari va tavsiyalar" className="lg:col-span-2">
           {r.factors.length === 0 ? (
-            <p className="text-sm text-emerald-700">Hozircha xavf belgilari yo&apos;q. Muddatlar va moliyaviy holat me&apos;yorda.</p>
+            <p className="text-sm text-emerald-700">{t("Hozircha xavf belgilari yo'q. Muddatlar va moliyaviy holat me'yorda.")}</p>
           ) : (
             <ol className="space-y-3">
-              {r.factors.map((f) => (
+              {r.factors.map((f) => ({ f, x: factorText(f, t) })).map(({ f, x }) => (
                 <li key={f.code} className="rounded-lg border border-ink-100 p-3">
                   <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="font-medium">{f.title}</div>
-                    <div className="flex gap-1.5"><Pill>{GROUP_LABEL[f.group]}</Pill><Pill tone={f.points >= 15 ? "bad" : f.points >= 8 ? "warn" : "plain"}>+{f.points}</Pill></div>
+                    <div className="font-medium">{x.title}</div>
+                    <div className="flex gap-1.5"><Pill>{groupLabel(f.group, L)}</Pill><Pill tone={f.points >= 15 ? "bad" : f.points >= 8 ? "warn" : "plain"}>+{f.points}</Pill></div>
                   </div>
-                  <p className="mt-1 text-sm text-ink-700">{f.detail}</p>
-                  <p className="mt-2 rounded-md bg-brand-50 px-3 py-2 text-sm text-brand-900">💡 {f.tavsiya}</p>
+                  <p className="mt-1 text-sm text-ink-700">{x.detail}</p>
+                  <p className="mt-2 rounded-md bg-brand-50 px-3 py-2 text-sm text-brand-900">💡 {x.tavsiya}</p>
                 </li>
               ))}
             </ol>
@@ -92,9 +96,9 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
 
       {/* Moliyaviy tahlil */}
       <section id="moliya" className="mt-6 scroll-mt-6">
-        <Card title={`Moliyaviy tahlil${last ? ` · ${periodHuman(last.davr)}` : ""}`}>
+        <Card title={`${t("Moliyaviy tahlil")}${last ? ` · ${periodHuman(last.davr, L)}` : ""}`}>
           {!rt ? (
-            <p className="text-sm text-ink-500">Moliyaviy ma&apos;lumot yo&apos;q. Quyida choraklik balans ko&apos;rsatkichlarini kiriting yoki CSV yuklang.</p>
+            <p className="text-sm text-ink-500">{t("Moliyaviy ma'lumot yo'q. Quyida choraklik balans ko'rsatkichlarini kiriting yoki CSV yuklang.")}</p>
           ) : (
             <>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -103,32 +107,32 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
                   const tone = v === null ? null : m.good(v);
                   return (
                     <div key={m.key} className="rounded-lg border border-ink-100 p-3">
-                      <div className="text-xs text-ink-500">{m.label}</div>
+                      <div className="text-xs text-ink-500">{t(m.label)}</div>
                       <div className={`mt-0.5 text-lg font-semibold tabular-nums ${tone ? TONE_CLS[tone] : "text-ink-500"}`}>{fmtRatio(v, m.fmt)}</div>
-                      <div className="text-[11px] text-ink-500">me&apos;yor: {m.norm}</div>
+                      <div className="text-[11px] text-ink-500">{t("me'yor")}: {t(m.norm)}</div>
                     </div>
                   );
                 })}
               </div>
-              <h3 className="mb-2 mt-6 text-sm font-semibold">Tushum va sof foyda dinamikasi</h3>
-              <div className="flex h-40 items-end gap-3" role="img" aria-label="Choraklar bo'yicha tushum va foyda">
+              <h3 className="mb-2 mt-6 text-sm font-semibold">{t("Tushum va sof foyda dinamikasi")}</h3>
+              <div className="flex h-40 items-end gap-3" role="img" aria-label={t("Choraklar bo'yicha tushum va foyda")}>
                 {recent.map((f) => (
                   <div key={f.davr} className="flex h-full flex-1 flex-col items-center justify-end gap-1">
                     <div className="text-[11px] tabular-nums text-ink-700">{short(f.tushum)}</div>
                     <div className="flex h-full w-full max-w-20 items-end gap-1">
-                      <div className="flex-1 rounded-t bg-brand-500" style={{ height: `${Math.max(2, (Math.abs(f.tushum) / maxRev) * 100)}%` }} title={`Tushum: ${som(f.tushum)}`} />
-                      <div className={`flex-1 rounded-t ${f.sof_foyda >= 0 ? "bg-emerald-500" : "bg-red-500"}`} style={{ height: `${Math.max(2, (Math.abs(f.sof_foyda) / maxRev) * 100)}%` }} title={`Sof foyda: ${som(f.sof_foyda)}`} />
+                      <div className="flex-1 rounded-t bg-brand-500" style={{ height: `${Math.max(2, (Math.abs(f.tushum) / maxRev) * 100)}%` }} title={`${t("Tushum")}: ${som(f.tushum)}`} />
+                      <div className={`flex-1 rounded-t ${f.sof_foyda >= 0 ? "bg-emerald-500" : "bg-red-500"}`} style={{ height: `${Math.max(2, (Math.abs(f.sof_foyda) / maxRev) * 100)}%` }} title={`${t("Sof foyda")}: ${som(f.sof_foyda)}`} />
                     </div>
                     <div className="text-xs text-ink-500">{f.davr}</div>
                   </div>
                 ))}
               </div>
-              <div className="mt-2 flex gap-4 text-xs text-ink-500"><span>■ <span className="text-brand-500">tushum</span></span><span>■ <span className="text-emerald-600">sof foyda</span> / <span className="text-red-600">zarar</span></span></div>
+              <div className="mt-2 flex gap-4 text-xs text-ink-500"><span>■ <span className="text-brand-500">{t("tushum")}</span></span><span>■ <span className="text-emerald-600">{t("sof foyda")}</span> / <span className="text-red-600">{t("zarar")}</span></span></div>
               <div className="mt-6">
                 <Table head={["Ko'rsatkich", ...recent.map((f) => f.davr)]} align={["l", ...recent.map(() => "r" as const)]}>
                   {FIN_FIELDS.map((ff) => (
                     <tr key={ff.key}>
-                      <td className="text-ink-700">{ff.label}</td>
+                      <td className="text-ink-700">{t(ff.label)}</td>
                       {recent.map((f) => <td key={f.davr} className={`text-right tabular-nums ${f[ff.key] < 0 ? "text-red-600" : ""}`}>{som(f[ff.key])}</td>)}
                     </tr>
                   ))}
@@ -140,25 +144,25 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
             <form action={saveFinancials} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <input type="hidden" name="company_id" value={id} />
               <div>
-                <label className="label" htmlFor="davr">Davr</label>
+                <label className="label" htmlFor="davr">{t("Davr")}</label>
                 <input id="davr" name="davr" className="input" defaultValue={last?.davr ?? quarterOf(today)} pattern="\d{4}-Q[1-4]" required />
               </div>
               {FIN_FIELDS.map((ff) => (
                 <div key={ff.key}>
-                  <label className="label" htmlFor={ff.key}>{ff.label}</label>
+                  <label className="label" htmlFor={ff.key}>{t(ff.label)}</label>
                   <input id={ff.key} name={ff.key} className="input tabular-nums" inputMode="decimal" defaultValue={last ? String(last[ff.key]) : ""} placeholder="0" />
-                  {ff.hint && <p className="mt-1 text-[11px] text-ink-500">{ff.hint}</p>}
+                  {ff.hint && <p className="mt-1 text-[11px] text-ink-500">{t(ff.hint)}</p>}
                 </div>
               ))}
-              <div className="sm:col-span-2 lg:col-span-4"><button className="btn">Saqlash va riskni hisoblash</button></div>
+              <div className="sm:col-span-2 lg:col-span-4"><button className="btn">{t("Saqlash va riskni hisoblash")}</button></div>
             </form>
           </AddBox>
           <AddBox title="1C / Excel'dan CSV yuklash">
             <form action={importFinancials} className="space-y-3">
               <input type="hidden" name="company_id" value={id} />
-              <p className="text-xs text-ink-500">Birinchi qator — ustun nomlari. Ajratuvchi: nuqtali vergul, tab yoki vergul. Ustunlar: <code>davr;{FIN_FIELDS.map((f) => f.key).join(";")}</code></p>
+              <p className="text-xs text-ink-500">{t("Birinchi qator — ustun nomlari. Ajratuvchi: nuqtali vergul, tab yoki vergul. Ustunlar:")} <code>davr;{FIN_FIELDS.map((f) => f.key).join(";")}</code></p>
               <textarea name="csv" rows={5} className="input font-mono text-xs" placeholder={`davr;tushum;tannarx;sof_foyda;jami_aktiv;joriy_aktiv;pul;joriy_majburiyat;kapital\n2026-Q2;850000000;640000000;42000000;1200000000;700000000;90000000;380000000;600000000`} required />
-              <button className="btn">Yuklash</button>
+              <button className="btn">{t("Yuklash")}</button>
             </form>
           </AddBox>
         </Card>
@@ -172,15 +176,15 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
               const late = d.hisobot_holati === "kutilmoqda" && d.muddat < iso(today);
               return (
                 <tr key={d.id}>
-                  <td>{d.soliq}{d.turi === "statistika" && <> <Pill tone="info">stat</Pill></>}</td>
-                  <td>{periodHuman(d.davr)}</td>
+                  <td>{t(d.soliq)}{d.turi === "statistika" && <> <Pill tone="info">stat</Pill></>}</td>
+                  <td>{periodHuman(d.davr, L)}</td>
                   <td><Pill tone={late ? "bad" : d.hisobot_holati === "topshirildi" ? "good" : "info"}>{dateUz(d.muddat)}</Pill></td>
                   <td>
                     <form action={markDeadline} className="inline">
                       <input type="hidden" name="id" value={d.id} /><input type="hidden" name="back" value={back} />
                       <input type="hidden" name="field" value="hisobot_holati" />
                       <input type="hidden" name="value" value={d.hisobot_holati === "topshirildi" ? "kutilmoqda" : "topshirildi"} />
-                      <button className="btn-sm">{d.hisobot_holati === "topshirildi" ? "✓ topshirilgan" : "Topshirildi"}</button>
+                      <button className="btn-sm">{d.hisobot_holati === "topshirildi" ? `✓ ${t("topshirilgan")}` : t("Topshirildi")}</button>
                     </form>
                   </td>
                 </tr>
@@ -188,15 +192,15 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
             })}
           </Table>
         </Card>
-        <Card title="Javob kutayotgan soliq xatlari" className="lg:col-span-2" right={<Link href="/xatlar/" className="text-xs link">Hammasi →</Link>}>
+        <Card title="Javob kutayotgan soliq xatlari" className="lg:col-span-2" right={<Link href="/xatlar/" className="text-xs link">{t("Hammasi")} →</Link>}>
           <ul className="divide-y divide-ink-100 text-sm">
             {letters.map((l) => (
               <li key={l.id} className="flex justify-between gap-2 py-2">
-                <span>{l.tur} №{l.raqam}</span>
+                <span>{t(l.tur)} №{l.raqam}</span>
                 <Pill tone={l.javob_muddati && l.javob_muddati < iso(today) ? "bad" : "warn"}>{dateUz(l.javob_muddati)}</Pill>
               </li>
             ))}
-            {!letters.length && <li className="py-6 text-center text-ink-500">Ochiq xat yo&apos;q</li>}
+            {!letters.length && <li className="py-6 text-center text-ink-500">{t("Ochiq xat yo'q")}</li>}
           </ul>
         </Card>
       </div>
@@ -208,22 +212,22 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
             <input type="hidden" name="id" value={id} />
             {(["soliq", "statistika"] as const).map((g) => (
               <fieldset key={g} className="mb-4">
-                <legend className="label">{g === "soliq" ? "Topshiriladigan soliq hisobotlari" : "Statistika hisobotlari"}</legend>
-                {g === "statistika" && <p className="mb-2 text-xs text-ink-500">Korxona qaysi shakllarni topshirishini stat.uz «Taqdim etiladigan hisobotlar ro&apos;yxati» xizmatida (ERI bilan) ko&apos;ring va shu yerda belgilang.</p>}
+                <legend className="label">{t(g === "soliq" ? "Topshiriladigan soliq hisobotlari" : "Statistika hisobotlari")}</legend>
+                {g === "statistika" && <p className="mb-2 text-xs text-ink-500">{t("Korxona qaysi shakllarni topshirishini stat.uz «Taqdim etiladigan hisobotlar ro'yxati» xizmatida (ERI bilan) ko'ring va shu yerda belgilang.")}</p>}
                 <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
-                  {types.filter((t) => (t.turi ?? "soliq") === g).map((t) => (
-                    <label key={t.code} className="flex items-center gap-2 text-sm" title={t.izoh || undefined}>
-                      <input type="checkbox" name="soliq" value={t.code} defaultChecked={linkedSet.has(t.code)} /> {t.nomi}
+                  {types.filter((x) => (x.turi ?? "soliq") === g).map((x) => (
+                    <label key={x.code} className="flex items-center gap-2 text-sm" title={x.izoh ? t(x.izoh) : undefined}>
+                      <input type="checkbox" name="soliq" value={x.code} defaultChecked={linkedSet.has(x.code)} /> {t(x.nomi)}
                     </label>
                   ))}
                 </div>
               </fieldset>
             ))}
-            <button className="btn mt-3">Saqlash</button>
+            <button className="btn mt-3">{t("Saqlash")}</button>
           </form>
           <form action={archiveCompany}>
             <input type="hidden" name="id" value={id} /><input type="hidden" name="arxiv" value={c.arxiv ? "0" : "1"} />
-            <button className="btn-ghost border border-ink-300">{c.arxiv ? "Arxivdan tiklash" : "Arxivga o'tkazish (mijoz ketdi)"}</button>
+            <button className="btn-ghost border border-ink-300">{t(c.arxiv ? "Arxivdan tiklash" : "Arxivga o'tkazish (mijoz ketdi)")}</button>
           </form>
         </Card>
       )}

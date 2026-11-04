@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getT } from "@/lib/i18n";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { dateUz, som } from "@/lib/format";
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Ehf({ searchParams }: { searchParams: Promise<{ hammasi?: string; ok?: string; xato?: string }> }) {
   const u = await requireUser();
+  const t = await getT();
   const sp = await searchParams;
   const all = sp.hammasi === "1";
   const sql = db();
@@ -21,12 +23,12 @@ export default async function Ehf({ searchParams }: { searchParams: Promise<{ ha
     companyOptions(u),
   ]);
   const St = ({ id, holati, label }: { id: number; holati: string; label: string }) => (
-    <form action={setEhfStatus} className="inline"><input type="hidden" name="id" value={id} /><input type="hidden" name="holati" value={holati} /><button className="btn-sm">{label}</button></form>
+    <form action={setEhfStatus} className="inline"><input type="hidden" name="id" value={id} /><input type="hidden" name="holati" value={holati} /><button className="btn-sm">{t(label)}</button></form>
   );
   return (
     <>
       <PageTitle title="Elektron hisob-fakturalar" sub="Didox'da imzo kutayotgan fakturalar. 5 kundan uzoq kutgan va xavfli kontragentli fakturalar riskni oshiradi."
-        right={<Link href={all ? "/ehf/" : "/ehf/?hammasi=1"} className="btn-ghost">{all ? "Faqat imzo kutayotganlar" : "Hammasi"}</Link>} />
+        right={<Link href={all ? "/ehf/" : "/ehf/?hammasi=1"} className="btn-ghost">{t(all ? "Faqat imzo kutayotganlar" : "Hammasi")}</Link>} />
       {sp.ok && <Notice>{sp.ok}</Notice>}
       {sp.xato && <Notice kind="err">{sp.xato}</Notice>}
       {opts.length > 0 && (
@@ -39,8 +41,8 @@ export default async function Ehf({ searchParams }: { searchParams: Promise<{ ha
             <Field label="Kontragent STIR" name="kontragent_stir" />
             <Field label="Summa (QQS bilan)" name="summa" required />
             <Select label="Yo'nalish" name="yonalish" options={[["kiruvchi", "Kiruvchi"], ["chiquvchi", "Chiquvchi"]]} />
-            <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" name="xavfli" /> Kontragent yuqori tavakkalchilikda</label>
-            <div><button className="btn">Saqlash</button></div>
+            <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" name="xavfli" /> {t("Kontragent yuqori tavakkalchilikda")}</label>
+            <div><button className="btn">{t("Saqlash")}</button></div>
           </form>
         </AddBox>
       )}
@@ -51,10 +53,10 @@ export default async function Ehf({ searchParams }: { searchParams: Promise<{ ha
             return (
               <tr key={e.id}>
                 <td><Link href={`/korxonalar/${e.company_id}/`} className="link">{e.korxona}</Link></td>
-                <td>№{e.raqam} <span className="text-xs text-ink-500">{dateUz(e.sana_s)} · {e.yonalish}</span></td>
+                <td>№{e.raqam} <span className="text-xs text-ink-500">{dateUz(e.sana_s)} · {t(e.yonalish)}</span></td>
                 <td>{e.kontragent}{e.xavfli && <> <Pill tone="bad">xavfli</Pill></>}{e.kontragent_stir && <div className="text-xs text-ink-500">{e.kontragent_stir}</div>}</td>
                 <td className="text-right tabular-nums">{som(e.summa)}</td>
-                <td>{e.holati === "imzo_kutmoqda" ? <Pill tone={wait > 5 ? "bad" : "warn"}>{wait} kun</Pill> : <Pill tone={e.holati === "imzolandi" ? "good" : "plain"}>{e.holati === "imzolandi" ? "imzolangan" : "rad etilgan"}</Pill>}</td>
+                <td>{e.holati === "imzo_kutmoqda" ? <Pill tone={wait > 5 ? "bad" : "warn"}>{t("{n} kun", { n: wait })}</Pill> : <Pill tone={e.holati === "imzolandi" ? "good" : "plain"}>{t(e.holati === "imzolandi" ? "imzolangan" : "rad etilgan")}</Pill>}</td>
                 <td className="space-x-1 whitespace-nowrap">
                   {e.holati === "imzo_kutmoqda" ? <><St id={e.id} holati="imzolandi" label="Imzolandi" /><St id={e.id} holati="rad" label="Rad" /></> : <St id={e.id} holati="imzo_kutmoqda" label="Qaytarish" />}
                   <St id={e.id} holati={e.xavfli ? "xavfsiz" : "xavfli"} label={e.xavfli ? "Xavfsiz" : "Xavfli"} />

@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/auth";
+import { getT } from "@/lib/i18n";
 import { db } from "@/lib/db";
 import { Card, PageTitle, Table } from "@/components/ui";
 
@@ -6,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Journal({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   await requireAdmin();
+  const t = await getT();
   const { q } = await searchParams;
   const sql = db();
   const like = q?.trim() ? `%${q.trim()}%` : null;
@@ -17,12 +19,12 @@ export default async function Journal({ searchParams }: { searchParams: Promise<
     <>
       <PageTitle title="Jurnal" sub="Kim, qachon, nimani o'zgartirdi (oxirgi 300 ta yozuv)" />
       <Card>
-        <form className="mb-4 flex gap-2"><input name="q" defaultValue={q} className="input max-w-sm" placeholder="Qidirish" aria-label="Qidirish" /><button className="btn-ghost border border-ink-300">Qidirish</button></form>
+        <form className="mb-4 flex gap-2"><input name="q" defaultValue={q} className="input max-w-sm" placeholder={t("Qidirish")} aria-label={t("Qidirish")} /><button className="btn-ghost border border-ink-300">{t("Qidirish")}</button></form>
         <Table head={["Vaqt", "Xodim", "Amal", "Obyekt", "Tafsilot"]}>
           {rows.map((r) => (
             <tr key={r.id}>
               <td className="whitespace-nowrap tabular-nums">{r.vaqt}</td>
-              <td>{r.fio ?? "tizim"}</td>
+              <td>{r.fio ?? t("tizim")}</td>
               <td>{r.amal}</td>
               <td className="font-mono text-xs">{r.obyekt}</td>
               <td className="max-w-md truncate font-mono text-xs text-ink-500" title={r.tafsilot ? JSON.stringify(r.tafsilot) : ""}>{r.tafsilot ? JSON.stringify(r.tafsilot) : ""}</td>

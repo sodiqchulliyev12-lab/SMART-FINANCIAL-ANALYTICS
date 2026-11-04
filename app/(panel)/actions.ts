@@ -164,7 +164,8 @@ export async function importFinancials(f: FormData) {
 export async function markDeadline(f: FormData) {
   const u = await requireUser();
   const id = int(f, "id");
-  const back_ = str(f, "back") || "/muddatlar/";
+  const raw = str(f, "back");
+  const back_ = raw.startsWith("/") && !raw.startsWith("//") ? raw : "/muddatlar/";
   const [d] = await db()`SELECT company_id FROM deadlines WHERE id = ${id}`;
   const cid = await companyGuard(u, d?.company_id ?? null, back_);
   const field = str(f, "field");

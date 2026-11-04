@@ -2,12 +2,139 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --c-surface: 255 255 255;
+  --c-ink-50: 246 247 249;
+  --c-ink-100: 238 240 243;
+  --c-ink-300: 201 206 214;
+  --c-ink-500: 92 101 115;
+  --c-ink-700: 58 66 80;
+  --c-ink-900: 21 26 35;
+  --c-brand-50: 238 244 255;
+  --c-brand-100: 219 230 254;
+  --c-brand-400: 91 141 239;
+  --c-brand-500: 58 111 224;
+  --c-brand-600: 40 86 196;
+  --c-brand-700: 31 68 156;
+  --c-brand-900: 20 40 90;
+  --c-emerald-50: 236 253 245;
+  --c-emerald-200: 167 243 208;
+  --c-emerald-500: 16 185 129;
+  --c-emerald-600: 5 150 105;
+  --c-emerald-700: 4 120 87;
+  --c-emerald-800: 6 95 70;
+  --c-amber-50: 255 251 235;
+  --c-amber-200: 253 230 138;
+  --c-amber-500: 245 158 11;
+  --c-amber-600: 217 119 6;
+  --c-amber-700: 180 83 9;
+  --c-amber-800: 146 64 14;
+  --c-orange-50: 255 247 237;
+  --c-orange-200: 254 215 170;
+  --c-orange-500: 249 115 22;
+  --c-orange-600: 234 88 12;
+  --c-orange-700: 194 65 12;
+  --c-orange-800: 154 52 18;
+  --c-red-50: 254 242 242;
+  --c-red-200: 254 202 202;
+  --c-red-500: 239 68 68;
+  --c-red-600: 220 38 38;
+  --c-red-700: 185 28 28;
+  --c-red-800: 153 27 27;
+  color-scheme: light;
+}
+:root.dark {
+  --c-surface: 24 28 37;
+  --c-ink-50: 14 17 23;
+  --c-ink-100: 40 46 58;
+  --c-ink-300: 72 80 95;
+  --c-ink-500: 148 156 170;
+  --c-ink-700: 201 207 217;
+  --c-ink-900: 236 239 244;
+  --c-brand-50: 27 39 70;
+  --c-brand-100: 38 58 104;
+  --c-brand-400: 110 150 240;
+  --c-brand-500: 84 130 232;
+  --c-brand-600: 58 111 224;
+  --c-brand-700: 147 180 250;
+  --c-brand-900: 205 218 252;
+  --c-emerald-50: 16 44 36;
+  --c-emerald-200: 28 90 70;
+  --c-emerald-500: 16 185 129;
+  --c-emerald-600: 52 211 153;
+  --c-emerald-700: 110 231 183;
+  --c-emerald-800: 167 243 208;
+  --c-amber-50: 52 38 12;
+  --c-amber-200: 110 80 20;
+  --c-amber-500: 245 158 11;
+  --c-amber-600: 251 191 36;
+  --c-amber-700: 252 211 77;
+  --c-amber-800: 253 230 138;
+  --c-orange-50: 56 30 14;
+  --c-orange-200: 120 60 25;
+  --c-orange-500: 249 115 22;
+  --c-orange-600: 251 146 60;
+  --c-orange-700: 253 186 116;
+  --c-orange-800: 254 215 170;
+  --c-red-50: 60 22 24;
+  --c-red-200: 120 40 44;
+  --c-red-500: 239 68 68;
+  --c-red-600: 248 113 113;
+  --c-red-700: 252 165 165;
+  --c-red-800: 254 202 202;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+  --c-surface: 24 28 37;
+  --c-ink-50: 14 17 23;
+  --c-ink-100: 40 46 58;
+  --c-ink-300: 72 80 95;
+  --c-ink-500: 148 156 170;
+  --c-ink-700: 201 207 217;
+  --c-ink-900: 236 239 244;
+  --c-brand-50: 27 39 70;
+  --c-brand-100: 38 58 104;
+  --c-brand-400: 110 150 240;
+  --c-brand-500: 84 130 232;
+  --c-brand-600: 58 111 224;
+  --c-brand-700: 147 180 250;
+  --c-brand-900: 205 218 252;
+  --c-emerald-50: 16 44 36;
+  --c-emerald-200: 28 90 70;
+  --c-emerald-500: 16 185 129;
+  --c-emerald-600: 52 211 153;
+  --c-emerald-700: 110 231 183;
+  --c-emerald-800: 167 243 208;
+  --c-amber-50: 52 38 12;
+  --c-amber-200: 110 80 20;
+  --c-amber-500: 245 158 11;
+  --c-amber-600: 251 191 36;
+  --c-amber-700: 252 211 77;
+  --c-amber-800: 253 230 138;
+  --c-orange-50: 56 30 14;
+  --c-orange-200: 120 60 25;
+  --c-orange-500: 249 115 22;
+  --c-orange-600: 251 146 60;
+  --c-orange-700: 253 186 116;
+  --c-orange-800: 254 215 170;
+  --c-red-50: 60 22 24;
+  --c-red-200: 120 40 44;
+  --c-red-500: 239 68 68;
+  --c-red-600: 248 113 113;
+  --c-red-700: 252 165 165;
+  --c-red-800: 254 202 202;
+    color-scheme: dark;
+  }
+}
+
+
 body { @apply bg-ink-50 text-ink-900 antialiased; }
-.input { @apply w-full rounded-lg border border-ink-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100; }
+.input { @apply w-full rounded-lg border border-ink-300 bg-surface px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100; }
 .label { @apply mb-1 block text-xs font-medium text-ink-700; }
-.btn, .btn-ghost, .btn-sm, a, summary { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2; }
-.btn { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50; }
+.btn, .btn-ghost, .btn-sm, a, summary { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface; }
+.btn { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-500 disabled:opacity-50; }
 .btn-ghost { @apply inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 hover:bg-ink-100; }
-.btn-sm { @apply inline-flex items-center rounded-md border border-ink-300 bg-white px-2 py-1 text-xs font-medium text-ink-700 hover:bg-ink-100; }
+.btn-sm { @apply inline-flex items-center rounded-md border border-ink-300 bg-surface px-2 py-1 text-xs font-medium text-ink-700 hover:bg-ink-100; }
 .link { @apply font-medium text-brand-700 hover:underline; }
-@media print { body { @apply bg-white; } }
+@media print { body { @apply bg-surface; } }
