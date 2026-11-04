@@ -78,6 +78,8 @@ export const RU: Record<string, string> = {
   "Bu login band": "Этот логин занят",
   "Budjetga qarz": "Долг перед бюджетом",
   "Budjetga qarz bor": "Есть долг перед бюджетом",
+  "Nazoratdagi korxonalar: {n}": "Организаций на контроле: {n}",
+  "Sizga biriktirilgan korxonalar: {n}": "Ваших организаций: {n}",
   "Bugun {d} · nazoratdagi korxonalar: {n}": "Сегодня {d} · организаций на контроле: {n}",
   "Bugun {d} · sizga biriktirilgan korxonalar: {n}": "Сегодня {d} · ваших организаций: {n}",
   "Bugunoq topshiring: kechikkan hisobot uchun jarima (kichik korxonaga 3 BHM) va har bir kunga penya hisoblanadi.": "Сдайте сегодня же: за просрочку отчёта штраф (малому предприятию 3 БРВ) и пеня за каждый день.",

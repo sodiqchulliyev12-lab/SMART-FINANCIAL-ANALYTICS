@@ -4,25 +4,10 @@ import { currentUser, logout } from "@/lib/auth";
 import { setting } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { Prefs } from "@/components/Prefs";
-import { Nav, type NavItem } from "./nav";
+import { Crumb, Nav } from "./nav";
+import { NAV } from "@/lib/nav";
 import { dateUz } from "@/lib/format";
 import { iso, todayTashkent } from "@/lib/tax-calendar";
-
-const NAV: (NavItem & { admin?: boolean })[] = [
-  { href: "/", label: "Risk paneli", icon: "◆" },
-  { href: "/tahlil/", label: "Moliyaviy tahlil", icon: "📊" },
-  { href: "/korxonalar/", label: "Korxonalar", icon: "🏢" },
-  { href: "/muddatlar/", label: "Hisobot muddatlari", icon: "🗓" },
-  { href: "/xatlar/", label: "Soliq xatlari", icon: "✉" },
-  { href: "/ehf/", label: "EHF", icon: "🧾" },
-  { href: "/ijara/", label: "Ijara", icon: "🏠" },
-  { href: "/bojxona/", label: "Bojxona", icon: "🛃" },
-  { href: "/ishchilar/", label: "Ishchilar", icon: "👷" },
-  { href: "/xodimlar/", label: "Xodimlar", icon: "👥", admin: true },
-  { href: "/sozlamalar/", label: "Sozlamalar", icon: "⚙", admin: true },
-  { href: "/jurnal/", label: "Jurnal", icon: "📜", admin: true },
-  { href: "/profil/", label: "Profil", icon: "👤" },
-];
 
 async function doLogout() {
   "use server";
@@ -58,7 +43,10 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 bg-side px-4 text-side-ink print:hidden md:px-6">
-          <span className="truncate text-sm text-side-muted">{t("Bugun")} <b className="font-medium text-side-ink">{dateUz(iso(todayTashkent()))}</b></span>
+          <div className="flex min-w-0 items-baseline gap-3">
+            <Crumb items={items} />
+            <span className="hidden shrink-0 text-xs text-side-muted sm:inline">{t("Bugun")} {dateUz(iso(todayTashkent()))}</span>
+          </div>
           <div className="flex items-center gap-2">
             <Prefs dark />
             <span className="hidden max-w-[10rem] truncate text-xs text-side-muted lg:inline">{user.fio}</span>
@@ -67,7 +55,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             </form>
           </div>
         </header>
-        <main className="min-w-0 flex-1 bg-ink-50 px-4 py-6 md:rounded-tl-2xl md:px-8 md:py-8 print:rounded-none">
+        <main className="min-w-0 flex-1 bg-ink-50 px-4 py-5 md:rounded-tl-2xl md:px-8 md:py-6 print:rounded-none">
           <div className="mx-auto w-full max-w-7xl">{children}</div>
         </main>
       </div>

@@ -1,5 +1,6 @@
 import { Children, type ReactNode } from "react";
 import { getT, type T } from "@/lib/i18n";
+import { NAV_LABELS } from "@/lib/nav";
 import { levelLabel, levelOf, type RiskLevel } from "@/lib/risk";
 
 // Komponentlar matnli prop'larni (sarlavha, yorliq, izoh) o'zi tarjima qiladi: sahifalarda o'zbekcha yozish kifoya.
@@ -7,10 +8,24 @@ const tr = (t: T, v: ReactNode) => (typeof v === "string" ? t(v) : v);
 
 export async function PageTitle({ title, sub, right }: { title: string; sub?: ReactNode; right?: ReactNode }) {
   const t = await getT();
+  // Bo'lim nomi tepa qatorda turadi: bu yerda takrorlamaymiz, faqat izoh va tugmalar qoladi.
+  if (NAV_LABELS.has(title)) {
+    return (
+      <>
+        <h1 className="sr-only">{t(title)}</h1>
+        {(sub || right) && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            {sub ? <p className="text-sm text-ink-500">{tr(t, sub)}</p> : <span />}
+            {right}
+          </div>
+        )}
+      </>
+    );
+  }
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-semibold text-ink-900">{t(title)}</h1>
+        <h1 className="text-xl font-semibold text-ink-900">{t(title)}</h1>
         {sub && <p className="mt-1 text-sm text-ink-500">{tr(t, sub)}</p>}
       </div>
       {right}
@@ -44,12 +59,14 @@ export async function Stat({ label, value, hint, tone = "plain", href }: { label
   const t = await getT();
   const body = (
     <>
-      <div className="text-xs font-medium text-ink-500">{t(label)}</div>
-      <div className={`mt-1 text-2xl font-semibold tabular-nums ${TONE[tone]}`}>{value}</div>
-      {hint && <div className="mt-1 text-xs text-ink-500">{tr(t, hint)}</div>}
+      <div className="min-w-0">
+        <div className="truncate text-xs font-medium text-ink-500">{t(label)}</div>
+        {hint && <div className="mt-0.5 truncate text-[11px] text-ink-500">{tr(t, hint)}</div>}
+      </div>
+      <div className={`shrink-0 text-xl font-semibold tabular-nums ${TONE[tone]}`}>{value}</div>
     </>
   );
-  const cls = "block rounded-xl border border-ink-100 bg-surface p-4 shadow-sm";
+  const cls = "flex items-center justify-between gap-3 rounded-xl border border-ink-100 bg-surface px-4 py-3 shadow-sm";
   return href ? <a href={href} className={`${cls} hover:border-brand-400`}>{body}</a> : <div className={cls}>{body}</div>;
 }
 

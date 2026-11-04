@@ -44,7 +44,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageTitle title="Risk paneli" sub={t(scope ? "Bugun {d} · sizga biriktirilgan korxonalar: {n}" : "Bugun {d} · nazoratdagi korxonalar: {n}", { d: dateUz(iso(today)), n: companies.length })} />
+      <PageTitle title="Risk paneli" sub={t(scope ? "Sizga biriktirilgan korxonalar: {n}" : "Nazoratdagi korxonalar: {n}", { n: companies.length })} />
 
       {xato && <Notice kind="err">{xato}</Notice>}
       {none && (
@@ -62,7 +62,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <Stat label="Imzo kutayotgan EHF" value={(ehf as { n: number }[])[0].n} tone={(ehf as { n: number }[])[0].n ? "warn" : "good"} href="/ehf/" />
       </div>
 
-      <Card title="Portfel bo'yicha risk taqsimoti" className="mt-6">
+      <Card title="Portfel bo'yicha risk taqsimoti" className="mt-4">
         <div className="flex h-4 w-full overflow-hidden rounded-full bg-ink-100" role="img" aria-label={t("Risk taqsimoti")}>
           {(Object.keys(dist) as RiskLevel[]).map((lv) => dist[lv] ? <div key={lv} className={LEVEL_STYLE[lv].bar} style={{ width: `${(dist[lv] / scored) * 100}%` }} title={`${levelLabel(lv, t.lang)}: ${dist[lv]}`} /> : null)}
         </div>
@@ -73,7 +73,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </div>
       </Card>
 
-      <div className="mt-6 grid items-start gap-6 lg:grid-cols-5">
+      <div className="mt-4 grid items-start gap-4 lg:grid-cols-5">
         <Card title="Diqqat talab qiladigan korxonalar" className="lg:col-span-3">
           <Table head={["Korxona", "Risk", "Asosiy sabab"]} empty="Hamma korxonalar past riskda 👍">
             {hot.map((c) => {
