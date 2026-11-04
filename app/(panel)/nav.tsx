@@ -25,15 +25,9 @@ export function Nav({ items }: { items: NavItem[] }) {
   );
 }
 
-/** Tepa qatordagi joriy bo'lim nomi */
-export function Crumb({ items, home }: { items: NavItem[]; home: string }) {
+/** Tepa qatordagi joriy bo'lim nomi (sahifa sarlavhasi) */
+export function Crumb({ items }: { items: NavItem[] }) {
   const path = usePathname();
   const cur = [...items].sort((a, b) => b.href.length - a.href.length).find((i) => isActive(i.href, path));
-  return (
-    <div className="flex min-w-0 items-center gap-2 text-sm">
-      <span className="hidden text-side-muted sm:inline">{home}</span>
-      <span className="hidden text-side-muted sm:inline" aria-hidden>/</span>
-      <span className="truncate font-semibold text-side-ink">{cur?.label ?? home}</span>
-    </div>
-  );
+  return <span className="truncate text-lg font-semibold text-white">{cur?.label}</span>;
 }
