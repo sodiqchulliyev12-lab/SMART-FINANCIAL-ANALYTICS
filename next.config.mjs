@@ -2,6 +2,12 @@
 const nextConfig = {
   trailingSlash: true,
   serverExternalPackages: ["grammy", "postgres"],
+  // Railway build keshi (.next/cache) eski webpack natijalarini qaytarib, kod o'zgargandan keyingi
+  // birinchi build'ni "Module not found" bilan yiqitayotgan edi — production build keshsiz.
+  webpack(config, { dev }) {
+    if (!dev) config.cache = false;
+    return config;
+  },
   async headers() {
     return [
       {
