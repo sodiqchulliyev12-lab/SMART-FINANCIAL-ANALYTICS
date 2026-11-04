@@ -1,6 +1,6 @@
 // Soliq Monitor (my.soliq.uz, Didox, ijara.soliq.uz va customs.uz saytlarini tekshiruvchi tashqi dastur) shu manzilga natija yuboradi.
 // Avtorizatsiya: "Authorization: Bearer <MONITOR_KEY>". Korxona STIR bo'yicha topiladi.
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { audit, db } from "@/lib/db";
 import { recomputeRisk } from "@/lib/data";
 import { notifyNewLetters } from "@/bot/notify";
@@ -19,6 +19,9 @@ type Declaration = {
   stir: string; raqam: string; sana: string; rejim?: string; turi?: string; shartnoma?: string;
   valyuta?: string; summa?: number; boj_tolov?: number; holati?: string;
 };
+type Worker = { stir: string; jshshir?: string; fio?: string; lavozim?: string; shartnoma?: string; kirgan: string; ketgan?: string | null };
+/** JShShIR saqlanmaydi: korxona ichida takrorlanmas kalit sifatida faqat xeshi olinadi */
+const workerKey = (w: Worker) => createHash("sha256").update(`${s(w.jshshir, 20).replace(/\D/g, "") || `${s(w.fio, 200).toLowerCase()}|${w.kirgan}`}`).digest("hex").slice(0, 32);
 const num = (v: unknown) => (Number.isFinite(Number(v)) ? Number(v) : 0);
 
 const isDate = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -37,7 +40,7 @@ export async function POST(req: Request) {
   if (!authorized(req)) return Response.json({ ok: false, error: "forbidden" }, { status: 403 });
   let body: {
     letters?: Letter[]; ehf?: Ehf[]; leases?: Lease[];
-    bojxona_qarz?: CustomsDebt[]; tif_shartnomalar?: Contract[]; deklaratsiyalar?: Declaration[];
+    bojxona_qarz?: CustomsDebt[]; tif_shartnomalar?: Contract[]; deklaratsiyalar?: Declaration[]; xodimlar?: Worker[];
   };
   try {
     body = await req.json();
@@ -120,6 +123,18 @@ export async function POST(req: Request) {
     };
     const { company_id: _c, raqam: _r, ...upd } = row;
     await sql`INSERT INTO customs_declarations ${sql(row)} ON CONFLICT (company_id, raqam) DO UPDATE SET ${sql(upd)}`;
+    touched.add(id);
+  }
+
+  for (const w of (body.xodimlar ?? []).slice(0, 20000)) {
+    const id = cid(w.stir);
+    if (!id || !isDate(w.kirgan)) continue;
+    const row = {
+      company_id: id, kalit: workerKey(w), fio: s(w.fio, 200), lavozim: s(w.lavozim, 200), shartnoma: s(w.shartnoma, 60),
+      kirgan: w.kirgan, ketgan: isDate(w.ketgan) ? w.ketgan : null, manba: "monitor",
+    };
+    const { company_id: _c, kalit: _k, ...upd } = row;
+    await sql`INSERT INTO workers ${sql(row)} ON CONFLICT (company_id, kalit) DO UPDATE SET ${sql(upd)}`;
     touched.add(id);
   }
 

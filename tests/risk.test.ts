@@ -100,3 +100,12 @@ test("statistika hisobotlari: alohida omil, soliq omiliga qo'shilmaydi", () => {
   assert.ok(!codes.includes("hisobot_kechikdi"));
   assert.equal(r.factors.find((f) => f.code === "stat_kechikdi")!.points, 8);
 });
+
+test("ishchilar: faol xodim yo'q va ko'p ketish", () => {
+  assert.ok(assessRisk(empty({ workforce: { active: 0, hired90: 0, left90: 0 } })).factors.some((f) => f.code === "ishchi_yoq"));
+  const r = assessRisk(empty({ workforce: { active: 10, hired90: 2, left90: 6 } })); // boshida 14, 6 ketdi = 43%
+  const f = r.factors.find((x) => x.code === "ishchi_ketish");
+  assert.ok(f);
+  assert.equal(f!.points, 10);
+  assert.ok(!assessRisk(empty({ workforce: null })).factors.some((x) => x.code.startsWith("ishchi")));
+});

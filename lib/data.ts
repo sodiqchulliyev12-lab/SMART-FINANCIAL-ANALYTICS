@@ -92,7 +92,7 @@ export async function riskInput(companyId: number, today = todayTashkent()): Pro
   const sql = db();
   const c = await getCompany(companyId);
   if (!c) return null;
-  const [deadlines, letters, ehf, leases, financials, bhm, debt, contracts] = await Promise.all([
+  const [deadlines, letters, ehf, leases, financials, bhm, debt, contracts, wf] = await Promise.all([
     sql`SELECT t.nomi AS soliq, t.turi, d.davr, to_char(d.muddat,'YYYY-MM-DD') AS muddat, d.hisobot_holati, d.tolov_holati
         FROM deadlines d JOIN tax_types t ON t.code = d.soliq
         WHERE d.company_id = ${companyId} AND d.muddat <= ${iso(addDays(today, 3))}
@@ -106,6 +106,11 @@ export async function riskInput(companyId: number, today = todayTashkent()): Pro
     sql`SELECT raqam, turi, kontragent, valyuta, summa, tolangan, yetkazilgan, to_char(sana,'YYYY-MM-DD') AS sana,
                to_char(ochiq_sana,'YYYY-MM-DD') AS ochiq_sana, to_char(tugash,'YYYY-MM-DD') AS tugash, holati
         FROM customs_contracts WHERE company_id = ${companyId} AND holati = 'faol'`,
+    sql`SELECT count(*)::int AS n,
+               count(*) FILTER (WHERE ketgan IS NULL)::int AS active,
+               count(*) FILTER (WHERE kirgan > ${iso(addDays(today, -90))})::int AS hired90,
+               count(*) FILTER (WHERE ketgan > ${iso(addDays(today, -90))})::int AS left90
+        FROM workers WHERE company_id = ${companyId}`,
   ]);
   return {
     today,
@@ -117,6 +122,7 @@ export async function riskInput(companyId: number, today = todayTashkent()): Pro
     leases: leases as never,
     customsDebt: Number(debt[0]?.summa ?? 0),
     contracts: contracts as never,
+    workforce: wf[0]?.n ? { active: wf[0].active, hired90: wf[0].hired90, left90: wf[0].left90 } : null,
     financials,
   };
 }

@@ -318,6 +318,38 @@ export async function setContractStatus(f: FormData) {
   back("/bojxona/", { ok: "Yangilandi" });
 }
 
+// ── Ishchilar (mehnat) ─────────────────────────────────────
+export async function saveWorker(f: FormData) {
+  const u = await requireUser();
+  const cid = await companyGuard(u, int(f, "company_id"), "/ishchilar/");
+  const fio = str(f, "fio", 200);
+  const kirgan = date(f, "kirgan");
+  const ketgan = date(f, "ketgan");
+  if (!fio || !kirgan) back("/ishchilar/", { xato: "F.I.Sh. va ishga kirgan sanani kiriting" });
+  if (ketgan && ketgan < kirgan) back("/ishchilar/", { xato: "Bo'shagan sana kirgan sanadan oldin bo'lmasin" });
+  const kalit = `q:${fio.toLowerCase()}|${kirgan}`;
+  const row = { company_id: cid, kalit, fio, lavozim: str(f, "lavozim", 200), shartnoma: str(f, "shartnoma", 60), kirgan, ketgan };
+  const { company_id: _c, kalit: _k, ...upd } = row;
+  const sql = db();
+  await sql`INSERT INTO workers ${sql(row)} ON CONFLICT (company_id, kalit) DO UPDATE SET ${sql(upd)}`;
+  await audit(u.id, "ishchi", `companies:${cid}`, { fio, kirgan, ketgan });
+  await afterChange(cid, "/ishchilar/");
+  back(`/ishchilar/?k=${cid}`, { ok: "Saqlandi" });
+}
+
+export async function dismissWorker(f: FormData) {
+  const u = await requireUser();
+  const id = int(f, "id");
+  const ketgan = date(f, "ketgan");
+  const [w] = await db()`SELECT company_id FROM workers WHERE id = ${id}`;
+  const cid = await companyGuard(u, w?.company_id ?? null, "/ishchilar/");
+  if (!ketgan) back(`/ishchilar/?k=${cid}`, { xato: "Bo'shagan sanani kiriting" });
+  await db()`UPDATE workers SET ketgan = ${ketgan} WHERE id = ${id}`;
+  await audit(u.id, "ishchi_boshadi", `workers:${id}`, { ketgan });
+  await afterChange(cid, "/ishchilar/");
+  back(`/ishchilar/?k=${cid}`, { ok: "Bo'shagan deb belgilandi" });
+}
+
 // ── Xodimlar ───────────────────────────────────────────────
 export async function saveUser(f: FormData) {
   const u = await requireAdmin();

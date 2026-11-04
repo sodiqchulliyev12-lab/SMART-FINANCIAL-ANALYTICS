@@ -43,12 +43,22 @@ export type RiskInput = {
   letters: { raqam: string; tur: string; javob_muddati: string | null; holati: string }[];
   ehf: { raqam: string; kontragent: string; sana: string; holati: string; yonalish: string; xavfli: boolean; summa: number }[];
   leases: { raqam: string; tugash: string; holati: string }[];
+  /** my.mehnat.uz: hozir ishlayotganlar va oxirgi 90 kundagi harakat; null — ma'lumot yo'q */
+  workforce?: WorkforceStats | null;
   /** dep.customs.uz/qarzdor bo'yicha bojxona qarzi, so'm */
   customsDebt?: number;
   /** contract.customs.uz: faol tashqi savdo shartnomalari */
   contracts?: TifContract[];
   financials: Financials[]; // davr bo'yicha o'sish tartibida
 };
+
+export type WorkforceStats = { active: number; hired90: number; left90: number };
+
+/** 90 kunlik ketish darajasi: ketganlar / (hozirgi + ketganlar - kirganlar), ya'ni davr boshidagi soniga nisbatan */
+export function turnover90(w: WorkforceStats): number {
+  const start = w.active + w.left90 - w.hired90;
+  return start > 0 ? w.left90 / start : 0;
+}
 
 export type TifContract = {
   raqam: string; turi: string; kontragent: string; valyuta: string;
@@ -341,6 +351,32 @@ export function assessRisk(input: RiskInput): RiskResult {
       points: Math.min(8, expiring.length * 4),
       tavsiya: "Ijarachi bilan uzaytirish shartlarini oldindan kelishib oling.",
     });
+  }
+
+  // ── Ishchilar ───────────────────────────────────────────────
+  if (input.workforce) {
+    const w = input.workforce;
+    if (w.active === 0) {
+      add({
+        code: "ishchi_yoq",
+        group: "malumot",
+        title: "Mehnat tizimida faol xodim yo'q",
+        detail: "my.mehnat.uz bo'yicha korxonada rasmiylashtirilgan xodim ko'rinmayapti",
+        points: 6,
+        tavsiya: "Kamida rahbar mehnat shartnomasi bilan rasmiylashtirilgan bo'lishi kerak. Norasmiy bandlik uchun jarima va JShDS qo'shimcha hisoblanishi mumkin.",
+      });
+    }
+    const t = turnover90(w);
+    if (w.left90 >= 3 && t >= 0.2) {
+      add({
+        code: "ishchi_ketish",
+        group: "moliya",
+        title: "Xodimlarning ko'p ketishi",
+        detail: `90 kunda ${w.left90} kishi ketdi (${Math.round(t * 100)}%), ${w.hired90} kishi keldi. Hozir ${w.active} kishi`,
+        points: t >= 0.4 ? 10 : 5,
+        tavsiya: "Ommaviy ketish faoliyat qisqarayotganini yoki ish haqi muammosini bildirishi mumkin. Ish haqi qarzi va hisob-kitoblarni tekshiring.",
+      });
+    }
   }
 
   // ── Bojxona ─────────────────────────────────────────────────
