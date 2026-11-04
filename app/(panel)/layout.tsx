@@ -4,7 +4,7 @@ import { currentUser, logout } from "@/lib/auth";
 import { setting } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { Prefs } from "@/components/Prefs";
-import { Nav, type NavItem } from "./nav";
+import { Crumb, Nav, type NavItem } from "./nav";
 
 const NAV: (NavItem & { admin?: boolean })[] = [
   { href: "/", label: "Risk paneli", icon: "◆" },
@@ -33,26 +33,42 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   if (!user) redirect("/login/");
   const [firma, t] = await Promise.all([setting("firma_nomi", "Aqilli Moliya"), getT()]);
   const items = NAV.filter((i) => !i.admin || user.role === "admin").map(({ href, label, icon }) => ({ href, label: t(label), icon }));
+  const initials = user.fio.split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  const role = user.role === "admin" ? t("Rahbariyat") : user.lavozim || t("Xodim");
   return (
-    <div className="min-h-screen md:flex">
-      <aside className="border-b border-ink-100 bg-surface print:hidden md:sticky md:top-0 md:flex md:h-screen md:w-60 md:shrink-0 md:flex-col md:border-b-0 md:border-r">
-        <div className="flex items-center justify-between px-5 py-4 md:block">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-white">◆</span>
+    <div className="min-h-screen bg-side md:flex">
+      <aside className="text-side-ink print:hidden md:sticky md:top-0 md:flex md:h-screen md:w-60 md:shrink-0 md:flex-col">
+        <div className="flex h-14 items-center px-5">
+          <Link href="/" className="flex min-w-0 items-center gap-2.5 font-semibold text-white">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white shadow">◆</span>
             <span className="truncate">{firma}</span>
           </Link>
-          <div className="flex items-center gap-2 text-xs text-ink-500 md:mt-2">
-            <span>{user.fio} · {user.role === "admin" ? t("Rahbariyat") : user.lavozim || t("Xodim")}</span>
-            <form action={doLogout} className="md:hidden"><button className="btn-ghost px-2 py-1 text-xs">{t("Chiqish")}</button></form>
+        </div>
+        <div className="mx-5 mb-3 hidden h-px bg-white/10 md:block" />
+        <div className="md:flex-1 md:overflow-y-auto"><Nav items={items} /></div>
+        <div className="mx-3 mb-4 mt-3 hidden items-center gap-3 rounded-xl bg-white/5 p-3 md:flex">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">{initials}</span>
+          <div className="min-w-0 text-xs">
+            <p className="truncate font-medium text-side-ink">{user.fio}</p>
+            <p className="truncate text-side-muted">{role}</p>
           </div>
         </div>
-        <div className="md:flex-1 md:overflow-y-auto"><Nav items={items} /></div>
-        <Prefs className="px-5 pb-3 md:px-4 md:pt-3" />
-        <form action={doLogout} className="hidden px-3 pb-4 md:block">
-          <button className="btn-ghost w-full">↩ {t("Chiqish")}</button>
-        </form>
       </aside>
-      <main className="mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 py-6 md:px-8 md:py-8">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 bg-side px-4 text-side-ink print:hidden md:px-6">
+          <Crumb items={items} home={firma} />
+          <div className="flex items-center gap-2">
+            <Prefs dark />
+            <span className="hidden max-w-[10rem] truncate text-xs text-side-muted lg:inline">{user.fio}</span>
+            <form action={doLogout}>
+              <button className="rounded-md px-2 py-1 text-xs text-side-muted hover:bg-white/10 hover:text-white" title={t("Chiqish")}>↩<span className="ml-1 hidden sm:inline">{t("Chiqish")}</span></button>
+            </form>
+          </div>
+        </header>
+        <main className="min-w-0 flex-1 bg-ink-50 px-4 py-6 md:rounded-tl-2xl md:px-8 md:py-8 print:rounded-none">
+          <div className="mx-auto w-full max-w-7xl">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }
