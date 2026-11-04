@@ -4,7 +4,9 @@ import { currentUser, logout } from "@/lib/auth";
 import { setting } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { Prefs } from "@/components/Prefs";
-import { Crumb, Nav, type NavItem } from "./nav";
+import { Nav, type NavItem } from "./nav";
+import { dateUz } from "@/lib/format";
+import { iso, todayTashkent } from "@/lib/tax-calendar";
 
 const NAV: (NavItem & { admin?: boolean })[] = [
   { href: "/", label: "Risk paneli", icon: "◆" },
@@ -56,7 +58,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 bg-side px-4 text-side-ink print:hidden md:px-6">
-          <Crumb items={items} home={firma} />
+          <span className="truncate text-sm text-side-muted">{t("Bugun")} <b className="font-medium text-side-ink">{dateUz(iso(todayTashkent()))}</b></span>
           <div className="flex items-center gap-2">
             <Prefs dark />
             <span className="hidden max-w-[10rem] truncate text-xs text-side-muted lg:inline">{user.fio}</span>

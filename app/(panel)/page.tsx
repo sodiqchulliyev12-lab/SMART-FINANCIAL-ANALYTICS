@@ -73,7 +73,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </div>
       </Card>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-5">
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-5">
         <Card title="Diqqat talab qiladigan korxonalar" className="lg:col-span-3">
           <Table head={["Korxona", "Risk", "Asosiy sabab"]} empty="Hamma korxonalar past riskda 👍">
             {hot.map((c) => {
@@ -82,7 +82,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 <tr key={c.id}>
                   <td><Link href={`/korxonalar/${c.id}/`} className="link">{c.nomi}</Link><div className="text-xs text-ink-500">{c.masul ?? t("mas'ul yo'q")}</div></td>
                   <td><RiskBadge score={c.ball} /></td>
-                  <td className="text-ink-700">{f ? <><b className="font-medium">{factorText(f, t).title}</b><div className="text-xs text-ink-500">{factorText(f, t).detail}</div></> : "—"}</td>
+                  <td className="text-ink-700">{f ? <><b className="font-medium">{factorText(f, t).title}</b><div className="line-clamp-2 text-xs text-ink-500" title={factorText(f, t).detail}>{factorText(f, t).detail}</div></> : "—"}</td>
                 </tr>
               );
             })}
