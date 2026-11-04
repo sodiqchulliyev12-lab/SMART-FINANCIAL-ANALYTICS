@@ -1,0 +1,33 @@
+{
+  "name": "aqilli-moliya",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Buxgalteriya autsorsing firmasi uchun: korxonalar, soliq muddatlari, moliyaviy tahlil va risklarni oldindan aniqlash",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -H 0.0.0.0 -p ${PORT:-3000}",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "migrate": "tsx scripts/migrate.ts",
+    "seed:demo": "tsx scripts/seed-demo.ts"
+  },
+  "dependencies": {
+    "grammy": "1.46.0",
+    "next": "15.5.28",
+    "postgres": "3.4.5",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.0",
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
+    "autoprefixer": "10.4.21",
+    "postcss": "8.5.3",
+    "tailwindcss": "3.4.19",
+    "tsx": "4.23.15",
+    "typescript": "5.8.3"
+  },
+  "engines": { "node": ">=22" }
+}

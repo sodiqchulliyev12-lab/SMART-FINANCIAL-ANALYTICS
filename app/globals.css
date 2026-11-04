@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body { @apply bg-ink-50 text-ink-900 antialiased; }
+.input { @apply w-full rounded-lg border border-ink-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100; }
+.label { @apply mb-1 block text-xs font-medium text-ink-700; }
+.btn, .btn-ghost, .btn-sm, a, summary { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2; }
+.btn { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50; }
+.btn-ghost { @apply inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 hover:bg-ink-100; }
+.btn-sm { @apply inline-flex items-center rounded-md border border-ink-300 bg-white px-2 py-1 text-xs font-medium text-ink-700 hover:bg-ink-100; }
+.link { @apply font-medium text-brand-700 hover:underline; }
+@media print { body { @apply bg-white; } }
