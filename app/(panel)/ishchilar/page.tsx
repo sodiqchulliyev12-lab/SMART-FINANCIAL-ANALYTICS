@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getT } from "@/lib/i18n";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { dateUz } from "@/lib/format";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Workers({ searchParams }: { searchParams: Promise<{ k?: string; ok?: string; xato?: string }> }) {
   const u = await requireUser();
+  const t = await getT();
   const sp = await searchParams;
   const sql = db();
   const today = todayTashkent();
@@ -68,7 +70,7 @@ export default async function Workers({ searchParams }: { searchParams: Promise<
             <Select label="Shartnoma" name="shartnoma" options={[["muddatsiz", "Muddatsiz"], ["muddatli", "Muddatli"], ["o'rindosh", "O'rindoshlik"], ["fhsh", "Fuqarolik-huquqiy"]]} />
             <Field label="Ishga kirgan" name="kirgan" type="date" required />
             <Field label="Bo'shagan (agar ketgan bo'lsa)" name="ketgan" type="date" />
-            <div className="self-end"><button className="btn">Saqlash</button></div>
+            <div className="self-end"><button className="btn">{t("Saqlash")}</button></div>
           </form>
         </AddBox>
       )}
@@ -76,15 +78,15 @@ export default async function Workers({ searchParams }: { searchParams: Promise<
       <Card title="Korxonalar bo'yicha" className="mb-6">
         <Table head={["Korxona", "Hozir", "30 kunda +", "30 kunda −", "90 kunda ketish", ""]} align={["l", "r", "r", "r", "r", "r"]}>
           {summary.map((r) => {
-            const t = turnover90({ active: r.active, hired90: r.hired90, left90: r.left90 });
+            const tv = turnover90({ active: r.active, hired90: r.hired90, left90: r.left90 });
             return (
               <tr key={r.id} className={r.id === sel ? "bg-brand-50/60" : ""}>
                 <td><Link href={`/korxonalar/${r.id}/`} className="link">{r.nomi}</Link></td>
-                <td className="text-right font-semibold tabular-nums">{r.jami ? r.active : <span className="font-normal text-ink-500">ma&apos;lumot yo&apos;q</span>}</td>
+                <td className="text-right font-semibold tabular-nums">{r.jami ? r.active : <span className="font-normal text-ink-500">{t("ma'lumot yo'q")}</span>}</td>
                 <td className="text-right tabular-nums text-emerald-700">{r.hired30 || "—"}</td>
                 <td className="text-right tabular-nums text-amber-700">{r.left30 || "—"}</td>
-                <td className="text-right">{r.left90 ? <Pill tone={t >= 0.4 ? "bad" : t >= 0.2 ? "warn" : "plain"}>{r.left90} kishi · {Math.round(t * 100)}%</Pill> : "—"}</td>
-                <td className="text-right"><Link href={`/ishchilar/?k=${r.id}`} className="text-xs link">Ro&apos;yxat →</Link></td>
+                <td className="text-right">{r.left90 ? <Pill tone={tv >= 0.4 ? "bad" : tv >= 0.2 ? "warn" : "plain"}>{t("{n} kishi", { n: r.left90 })} · {Math.round(tv * 100)}%</Pill> : "—"}</td>
+                <td className="text-right"><Link href={`/ishchilar/?k=${r.id}`} className="text-xs link">{t("Ro'yxat")} →</Link></td>
               </tr>
             );
           })}
@@ -92,7 +94,7 @@ export default async function Workers({ searchParams }: { searchParams: Promise<
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title={`Oxirgi 90 kundagi harakat${selName ? ` · ${selName}` : ""}`} right={sel ? <Link href="/ishchilar/" className="text-xs link">Barcha korxonalar</Link> : undefined}>
+        <Card title={`${t("Oxirgi 90 kundagi harakat")}${selName ? ` · ${selName}` : ""}`} right={sel ? <Link href="/ishchilar/" className="text-xs link">{t("Barcha korxonalar")}</Link> : undefined}>
           <ul className="divide-y divide-ink-100 text-sm">
             {(moves as { id: number; fio: string; lavozim: string; sana: string; tur: string; korxona: string }[]).map((m) => (
               <li key={`${m.tur}${m.id}`} className="flex items-start justify-between gap-3 py-2">
@@ -100,32 +102,32 @@ export default async function Workers({ searchParams }: { searchParams: Promise<
                   <div className="font-medium">{m.fio || "—"}</div>
                   <div className="text-xs text-ink-500">{[m.lavozim, sel ? null : m.korxona].filter(Boolean).join(" · ")}</div>
                 </div>
-                <Pill tone={m.tur === "kirdi" ? "good" : "warn"}>{m.tur === "kirdi" ? "kirdi" : "ketdi"} {dateUz(m.sana)}</Pill>
+                <Pill tone={m.tur === "kirdi" ? "good" : "warn"}>{t(m.tur === "kirdi" ? "kirdi" : "ketdi")} {dateUz(m.sana)}</Pill>
               </li>
             ))}
-            {!moves.length && <li className="py-6 text-center text-ink-500">Harakat yo&apos;q</li>}
+            {!moves.length && <li className="py-6 text-center text-ink-500">{t("Harakat yo'q")}</li>}
           </ul>
         </Card>
         {sel && (
-          <Card title={`Hozir ishlayotganlar (${list.length})`}>
+          <Card title={`${t("Hozir ishlayotganlar")} (${list.length})`}>
             <ul className="divide-y divide-ink-100 text-sm">
               {(list as { id: number; fio: string; lavozim: string; shartnoma: string; kirgan: string }[]).map((w) => (
                 <li key={w.id} className="flex flex-wrap items-start justify-between gap-2 py-2">
                   <div>
                     <div className="font-medium">{w.fio}</div>
-                    <div className="text-xs text-ink-500">{[w.lavozim, w.shartnoma, `kirgan ${dateUz(w.kirgan)}`].filter(Boolean).join(" · ")}</div>
+                    <div className="text-xs text-ink-500">{[w.lavozim, w.shartnoma && t(w.shartnoma), `${t("kirgan")} ${dateUz(w.kirgan)}`].filter(Boolean).join(" · ")}</div>
                   </div>
                   <details className="[&_summary]:cursor-pointer">
-                    <summary className="btn-sm list-none">Bo&apos;shadi…</summary>
+                    <summary className="btn-sm list-none">{t("Bo'shadi")}…</summary>
                     <form action={dismissWorker} className="mt-2 flex items-center gap-1">
                       <input type="hidden" name="id" value={w.id} />
-                      <input type="date" name="ketgan" className="input w-36 py-1 text-xs" aria-label="Bo'shagan sana" required />
+                      <input type="date" name="ketgan" className="input w-36 py-1 text-xs" aria-label={t("Bo'shagan sana")} required />
                       <button className="btn-sm">OK</button>
                     </form>
                   </details>
                 </li>
               ))}
-              {!list.length && <li className="py-6 text-center text-ink-500">Faol ishchi yo&apos;q</li>}
+              {!list.length && <li className="py-6 text-center text-ink-500">{t("Faol ishchi yo'q")}</li>}
             </ul>
           </Card>
         )}

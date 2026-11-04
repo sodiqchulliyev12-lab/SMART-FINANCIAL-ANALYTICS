@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getT } from "@/lib/i18n";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { dateUz, som } from "@/lib/format";
@@ -18,6 +19,7 @@ const SOURCES = [
 
 export default async function Customs({ searchParams }: { searchParams: Promise<{ ok?: string; xato?: string }> }) {
   const u = await requireUser();
+  const t = await getT();
   const sp = await searchParams;
   const sql = db();
   const today = todayTashkent();
@@ -35,28 +37,28 @@ export default async function Customs({ searchParams }: { searchParams: Promise<
 
   return (
     <>
-      <PageTitle title="Bojxona" sub={<>Qarzlar, tashqi savdo shartnomalari va deklaratsiyalar. Manba: {SOURCES.map(([s, w], i) => <span key={s}>{i ? ", " : ""}<b className="font-medium">{s}</b> ({w})</span>)}.</>} />
+      <PageTitle title="Bojxona" sub={<>{t("Qarzlar, tashqi savdo shartnomalari va deklaratsiyalar. Manba:")} {SOURCES.map(([s, w], i) => <span key={s}>{i ? ", " : ""}<b className="font-medium">{s}</b> ({t(w)})</span>)}.</>} />
       {sp.ok && <Notice>{sp.ok}</Notice>}
       {sp.xato && <Notice kind="err">{sp.xato}</Notice>}
 
-      <Card title="Bojxona qarzlari" className="mb-6" right={withDebt.length ? <Pill tone="bad">{withDebt.length} ta korxonada qarz</Pill> : <Pill tone="good">Qarz yo&apos;q</Pill>}>
+      <Card title="Bojxona qarzlari" className="mb-6" right={withDebt.length ? <Pill tone="bad">{t("Qarzi bor korxonalar: {n}", { n: withDebt.length })}</Pill> : <Pill tone="good">{t("Qarz yo'q")}</Pill>}>
         {opts.length > 0 && (
           <AddBox title="Qarzni qo'lda kiritish (qarz yo'q bo'lsa 0)">
             <form action={saveCustomsDebt} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Select label="Korxona" name="company_id" options={opts} required />
               <Field label="Qarz, so'm" name="summa" required placeholder="0" />
               <Field label="Izoh" name="tafsilot" placeholder="masalan: boj to'lovi, penya" />
-              <div className="self-end"><button className="btn">Saqlash</button></div>
+              <div className="self-end"><button className="btn">{t("Saqlash")}</button></div>
             </form>
           </AddBox>
         )}
         <Table head={["Korxona", "Qarz, so'm", "Izoh", "Tekshirilgan"]} align={["l", "r", "l", "l"]} empty="Hali tekshirilmagan">
           {debts.map((d) => (
             <tr key={d.company_id}>
-              <td><Link href={`/korxonalar/${d.company_id}/`} className="link">{d.korxona}</Link><div className="text-xs text-ink-500">STIR {d.stir}</div></td>
+              <td><Link href={`/korxonalar/${d.company_id}/`} className="link">{d.korxona}</Link><div className="text-xs text-ink-500">{t("STIR")} {d.stir}</div></td>
               <td className={`text-right tabular-nums ${Number(d.summa) > 0 ? "font-semibold text-red-600" : "text-emerald-600"}`}>{Number(d.summa) > 0 ? som(d.summa) : "0"}</td>
               <td className="text-ink-700">{d.tafsilot || "—"}</td>
-              <td className="whitespace-nowrap text-xs text-ink-500">{dateUz(d.t)} · {d.manba === "monitor" ? "avtomatik" : "qo'lda"}</td>
+              <td className="whitespace-nowrap text-xs text-ink-500">{dateUz(d.t)} · {t(d.manba === "monitor" ? "avtomatik" : "qo'lda")}</td>
             </tr>
           ))}
         </Table>
@@ -64,8 +66,7 @@ export default async function Customs({ searchParams }: { searchParams: Promise<
 
       <Card title="Tashqi savdo shartnomalari" className="mb-6">
         <p className="mb-4 text-sm text-ink-500">
-          Import uchun to&apos;langan avans tovar bilan, eksport uchun jo&apos;natilgan tovar pul bilan odatda {TIF_SETTLE_DAYS} kun ichida qoplanishi kerak.
-          Qoplanmagan qism muddatga yaqinlashganda risk paneli ogohlantiradi.
+          {t("Import uchun to'langan avans tovar bilan, eksport uchun jo'natilgan tovar pul bilan odatda {n} kun ichida qoplanishi kerak. Qoplanmagan qism muddatga yaqinlashganda risk paneli ogohlantiradi.", { n: TIF_SETTLE_DAYS })}
         </p>
         {opts.length > 0 && (
           <AddBox title="Shartnoma qo'shish yoki yangilash">
@@ -82,7 +83,7 @@ export default async function Customs({ searchParams }: { searchParams: Promise<
               <Field label="Qoplanmagan qism sanasi" name="ochiq_sana" type="date" hint="Avans to'langan yoki tovar jo'natilgan kun" />
               <Field label="Shartnoma sanasi" name="sana" type="date" required />
               <Field label="Amal qilish muddati" name="tugash" type="date" />
-              <div className="self-end"><button className="btn">Saqlash</button></div>
+              <div className="self-end"><button className="btn">{t("Saqlash")}</button></div>
             </form>
           </AddBox>
         )}
@@ -100,18 +101,18 @@ export default async function Customs({ searchParams }: { searchParams: Promise<
                 </td>
                 <td className="text-right tabular-nums">{som(k.summa)} {k.valyuta}</td>
                 <td className="text-right tabular-nums">
-                  {open > 0 ? <>{som(open)} {k.valyuta}<div className="text-xs text-ink-500">{k.turi === "eksport" ? "pul kelmagan" : "tovar kelmagan"}</div></> : <span className="text-emerald-600">0</span>}
+                  {open > 0 ? <>{som(open)} {k.valyuta}<div className="text-xs text-ink-500">{t(k.turi === "eksport" ? "pul kelmagan" : "tovar kelmagan")}</div></> : <span className="text-emerald-600">0</span>}
                 </td>
                 <td className="whitespace-nowrap">
                   {k.holati === "faol" && open > 0
-                    ? <Pill tone={left < 0 ? "bad" : left <= 30 ? "warn" : "good"}>{left < 0 ? `${-left} kun o'tdi` : `${left} kun qoldi`}</Pill>
-                    : k.t ? <span className="text-xs text-ink-500">{dateUz(k.t)} gacha</span> : "—"}
+                    ? <Pill tone={left < 0 ? "bad" : left <= 30 ? "warn" : "good"}>{left < 0 ? t("{n} kun o'tdi", { n: -left }) : t("{n} kun qoldi", { n: left })}</Pill>
+                    : k.t ? <span className="text-xs text-ink-500">{t("{d} gacha", { d: dateUz(k.t) })}</span> : "—"}
                 </td>
                 <td>
                   <form action={setContractStatus} className="flex items-center gap-1">
                     <input type="hidden" name="id" value={k.id} />
-                    <select name="holati" defaultValue={k.holati} className="input w-auto py-1 text-xs" aria-label="Holat">
-                      <option value="faol">Faol</option><option value="yopilgan">Yopilgan</option><option value="bekor">Bekor qilingan</option>
+                    <select name="holati" defaultValue={k.holati} className="input w-auto py-1 text-xs" aria-label={t("Holat")}>
+                      <option value="faol">{t("Faol")}</option><option value="yopilgan">{t("Yopilgan")}</option><option value="bekor">{t("Bekor qilingan")}</option>
                     </select>
                     <button className="btn-sm">OK</button>
                   </form>
@@ -127,8 +128,8 @@ export default async function Customs({ searchParams }: { searchParams: Promise<
           {decls.map((x) => (
             <tr key={x.id}>
               <td><Link href={`/korxonalar/${x.company_id}/`} className="link">{x.korxona}</Link></td>
-              <td>№{x.raqam}<div className="text-xs text-ink-500">{dateUz(x.s)}{x.shartnoma && ` · shartnoma №${x.shartnoma}`}</div></td>
-              <td>{x.rejim || "—"} <span className="text-xs text-ink-500">{x.turi}</span></td>
+              <td>№{x.raqam}<div className="text-xs text-ink-500">{dateUz(x.s)}{x.shartnoma && ` · ${t("shartnoma")} №${x.shartnoma}`}</div></td>
+              <td>{x.rejim || "—"} <span className="text-xs text-ink-500">{t(x.turi)}</span></td>
               <td className="text-right tabular-nums">{som(x.summa)} {x.valyuta}</td>
               <td className="text-right tabular-nums">{som(x.boj_tolov)}</td>
               <td><Pill tone={/rad|bekor/i.test(x.holati) ? "bad" : /jarayon|kutil/i.test(x.holati) ? "warn" : "good"}>{x.holati}</Pill></td>

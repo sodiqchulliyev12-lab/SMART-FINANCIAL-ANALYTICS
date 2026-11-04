@@ -144,10 +144,14 @@ export function deadlinesBetween(t: TaxType, from: Date, to: Date, cal: Calendar
 
 /** Davr nomini o'qishga qulay ko'rinishga keltirish */
 const MONTHS = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr"];
-export function periodHuman(davr: string): string {
+const MONTHS_RU = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
+export function monthName(i: number, lang: "uz" | "ru" = "uz"): string {
+  return (lang === "ru" ? MONTHS_RU : MONTHS)[i];
+}
+export function periodHuman(davr: string, lang: "uz" | "ru" = "uz"): string {
   const m = davr.match(/^(\d{4})-(\d{2})$/);
-  if (m) return `${MONTHS[Number(m[2]) - 1]} ${m[1]}`;
+  if (m) return `${monthName(Number(m[2]) - 1, lang)} ${m[1]}`;
   const q = davr.match(/^(\d{4})-Q(\d)$/);
-  if (q) return `${q[2]}-chorak ${q[1]}`;
-  return `${davr} yil`;
+  if (q) return lang === "ru" ? `${q[2]} кв. ${q[1]}` : `${q[2]}-chorak ${q[1]}`;
+  return lang === "ru" ? `${davr} год` : `${davr} yil`;
 }

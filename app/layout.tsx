@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { getLang, getTheme } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Aqilli Moliya — korxonalar moliyaviy holati va risklar",
@@ -8,9 +9,10 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#2856c4" };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const [lang, theme] = await Promise.all([getLang(), getTheme()]);
   return (
-    <html lang="uz">
+    <html lang={lang} className={theme === "system" ? undefined : theme}>
       <body>{children}</body>
     </html>
   );

@@ -33,6 +33,16 @@ export const LEVEL_LABEL: Record<RiskLevel, string> = {
   kritik: "Kritik",
 };
 
+export function levelLabel(lv: RiskLevel, lang: "uz" | "ru" = "uz"): string {
+  return lang === "ru" ? { past: "Низкий", orta: "Средний", yuqori: "Высокий", kritik: "Критический" }[lv] : LEVEL_LABEL[lv];
+}
+
+export function groupLabel(g: RiskGroup, lang: "uz" | "ru" = "uz"): string {
+  return lang === "ru"
+    ? { soliq: "Налоговая дисциплина", moliya: "Финансовое состояние", rejim: "Налоговый режим", shartnoma: "Договоры", malumot: "Качество данных" }[g]
+    : GROUP_LABEL[g];
+}
+
 export type RiskResult = { score: number; level: RiskLevel; factors: RiskFactor[]; byGroup: Record<RiskGroup, number> };
 
 export type RiskInput = {

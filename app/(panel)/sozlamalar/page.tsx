@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/auth";
+import { getT } from "@/lib/i18n";
 import { db, setting } from "@/lib/db";
 import { taxTypes } from "@/lib/data";
 import { dateUz, som } from "@/lib/format";
@@ -11,6 +12,7 @@ const DAVR: Record<string, string> = { oy: "Oylik", chorak: "Choraklik", yil: "Y
 
 export default async function Settings({ searchParams }: { searchParams: Promise<{ ok?: string; xato?: string }> }) {
   await requireAdmin();
+  const t = await getT();
   const sp = await searchParams;
   const [firma, bhm, soat, types, days] = await Promise.all([
     setting("firma_nomi", "Aqilli Moliya"), setting("bhm", "412000"), setting("eslatma_soati", "9"), taxTypes(),
@@ -27,17 +29,17 @@ export default async function Settings({ searchParams }: { searchParams: Promise
           <form action={saveSettings} className="grid gap-4">
             <Field label="Firma nomi" name="firma_nomi" defaultValue={firma} />
             <Field label="BHM (bazaviy hisoblash miqdori), so'm" name="bhm" defaultValue={bhm} required
-              hint={`Aylanma chegarasi: ${TURNOVER_LIMIT_BHM.toLocaleString("ru-RU")} BHM = ${som(TURNOVER_LIMIT_BHM * Number(bhm))} so'm. Har yili avgustda yangilang.`} />
+              hint={t("Aylanma chegarasi: {a} BHM = {b} so'm. Har yili avgustda yangilang.", { a: TURNOVER_LIMIT_BHM.toLocaleString("ru-RU"), b: som(TURNOVER_LIMIT_BHM * Number(bhm)) })} />
             <Field label="Telegram eslatma soati (Toshkent)" name="eslatma_soati" type="number" defaultValue={soat} />
-            <div><button className="btn">Saqlash</button></div>
+            <div><button className="btn">{t("Saqlash")}</button></div>
           </form>
         </Card>
         <Card title="Integratsiyalar">
           <ul className="space-y-3 text-sm">
-            <li><b>Soliq Monitor API:</b> {monitor ? <span className="text-emerald-700">yoqilgan</span> : <span className="text-amber-700">MONITOR_KEY o&apos;rnatilmagan</span>}
-              <p className="text-xs text-ink-500">Monitor dasturi <code>POST /api/monitor</code> manziliga xatlar, EHF va ijara ma&apos;lumotini yuboradi (README&apos;da format).</p></li>
-            <li><b>Telegram bot:</b> {process.env.TELEGRAM_BOT_TOKEN ? <span className="text-emerald-700">ulangan</span> : <span className="text-amber-700">TELEGRAM_BOT_TOKEN yo&apos;q</span>}
-              <p className="text-xs text-ink-500">Xodimlar Profil sahifasidagi kod orqali ulanadi va har kuni o&apos;z korxonalari bo&apos;yicha xulosa oladi.</p></li>
+            <li><b>Soliq Monitor API:</b> {monitor ? <span className="text-emerald-700">{t("yoqilgan")}</span> : <span className="text-amber-700">{t("MONITOR_KEY o'rnatilmagan")}</span>}
+              <p className="text-xs text-ink-500">{t("Monitor dasturi POST /api/monitor manziliga xatlar, EHF, ijara, bojxona va ishchilar ma'lumotini yuboradi (README'da format).")}</p></li>
+            <li><b>Telegram bot:</b> {process.env.TELEGRAM_BOT_TOKEN ? <span className="text-emerald-700">{t("ulangan")}</span> : <span className="text-amber-700">{t("TELEGRAM_BOT_TOKEN yo'q")}</span>}
+              <p className="text-xs text-ink-500">{t("Xodimlar Profil sahifasidagi kod orqali ulanadi va har kuni o'z korxonalari bo'yicha xulosa oladi.")}</p></li>
           </ul>
         </Card>
       </div>
@@ -46,23 +48,23 @@ export default async function Settings({ searchParams }: { searchParams: Promise
         <Card key={g} title={g === "soliq" ? "Soliq turlari va muddatlari" : "Statistika hisobotlari va muddatlari"} className="mt-6">
           <p className="mb-3 text-xs text-ink-500">
             {g === "soliq"
-              ? <>Muddat = davr tugagan oydan keyin «oy siljishi» oyning «kun»i. Masalan QQS: 1 oy, 20-kun → oktabr uchun 20-noyabr. O&apos;zgarishlar ochiq hisobotlarga darhol qo&apos;llanadi. Standart qiymatlar taxminiy — joriy Soliq kodeksi bo&apos;yicha tekshiring.</>
-              : <>2026 yil shakllari (stat.uz). Muddatlar taxminiy: stat.uz har oy e&apos;lon qiladigan jadval bilan solishtiring. Ro&apos;yxatda yo&apos;q shaklni pastdan qo&apos;shing. Har bir korxonaga kerakli shakllar korxona sahifasida belgilanadi.</>}
+              ? t("Muddat = davr tugagan oydan keyin «oy siljishi» oyning «kun»i. Masalan QQS: 1 oy, 20-kun → oktabr uchun 20-noyabr. O'zgarishlar ochiq hisobotlarga darhol qo'llanadi. Standart qiymatlar taxminiy — joriy Soliq kodeksi bo'yicha tekshiring.")
+              : t("2026 yil shakllari (stat.uz). Muddatlar taxminiy: stat.uz har oy e'lon qiladigan jadval bilan solishtiring. Ro'yxatda yo'q shaklni pastdan qo'shing. Har bir korxonaga kerakli shakllar korxona sahifasida belgilanadi.")}
           </p>
           <Table head={["Nomi", "Davr", "Oy siljishi", "Kun", ""]}>
-            {types.filter((t) => (t.turi ?? "soliq") === g).map((t) => (
-              <tr key={t.code}>
+            {types.filter((x) => (x.turi ?? "soliq") === g).map((x) => (
+              <tr key={x.code}>
                 <td colSpan={5} className="!p-0">
                   <form action={saveTaxType} className="grid grid-cols-[2fr_1fr_1fr_1fr_auto] items-center gap-3 px-5 py-2">
-                    <input type="hidden" name="code" value={t.code} />
+                    <input type="hidden" name="code" value={x.code} />
                     <div>
-                      <input name="nomi" defaultValue={t.nomi} className="input" aria-label="Nomi" />
-                      {t.izoh && <p className="mt-1 text-xs text-ink-500">{t.izoh}</p>}
+                      <input name="nomi" defaultValue={x.nomi} className="input" aria-label={t("Nomi")} />
+                      {x.izoh && <p className="mt-1 text-xs text-ink-500">{t(x.izoh)}</p>}
                     </div>
-                    <span className="text-sm text-ink-700">{DAVR[t.davr]}</span>
-                    <input name="oy_offset" type="number" min={0} max={12} defaultValue={t.oy_offset} className="input" aria-label="Oy siljishi" />
-                    <input name="kun" type="number" min={1} max={31} defaultValue={t.kun} className="input" aria-label="Kun" />
-                    <button className="btn-sm">Saqlash</button>
+                    <span className="text-sm text-ink-700">{t(DAVR[x.davr])}</span>
+                    <input name="oy_offset" type="number" min={0} max={12} defaultValue={x.oy_offset} className="input" aria-label={t("Oy siljishi")} />
+                    <input name="kun" type="number" min={1} max={31} defaultValue={x.kun} className="input" aria-label={t("Kun")} />
+                    <button className="btn-sm">{t("Saqlash")}</button>
                   </form>
                 </td>
               </tr>
@@ -77,7 +79,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                 <Field label="Oy siljishi" name="oy_offset" type="number" defaultValue={1} required />
                 <Field label="Kun" name="kun" type="number" defaultValue={5} required />
                 <Field label="Kim topshiradi (izoh)" name="izoh" />
-                <div className="self-end"><button className="btn">Qo&apos;shish</button></div>
+                <div className="self-end"><button className="btn">{t("Qo'shish")}</button></div>
               </form>
             </AddBox>
           </div>
@@ -90,10 +92,10 @@ export default async function Settings({ searchParams }: { searchParams: Promise
           <Field label="Sana" name="sana" type="date" required />
           <Select label="Turi" name="tur" options={[["bayram", "Bayram"], ["dam", "Qo'shimcha dam olish"], ["ish", "Ish kuni (ko'chirilgan)"], ["ochirish", "— o'chirish —"]]} />
           <Field label="Nomi" name="nomi" placeholder="Mustaqillik kuni" />
-          <div className="self-end"><button className="btn">Saqlash</button></div>
+          <div className="self-end"><button className="btn">{t("Saqlash")}</button></div>
         </form>
         <Table head={["Sana", "Turi", "Nomi"]} empty="Bayramlar kiritilmagan — muddatlar faqat shanba/yakshanbani hisobga oladi">
-          {days.map((d) => <tr key={d.sana}><td>{dateUz(d.sana)}</td><td>{d.tur}</td><td>{d.nomi}</td></tr>)}
+          {days.map((d) => <tr key={d.sana}><td>{dateUz(d.sana)}</td><td>{t(d.tur)}</td><td>{d.nomi}</td></tr>)}
         </Table>
       </Card>
     </>

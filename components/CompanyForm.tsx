@@ -1,9 +1,11 @@
 import { saveCompany } from "@/app/(panel)/actions";
+import { getT } from "@/lib/i18n";
 import { Field, Select } from "@/components/ui";
 import { REGIMES } from "@/lib/tax-calendar";
 import type { CompanyRow } from "@/lib/data";
 
-export function CompanyForm({ c, staff }: { c?: CompanyRow | null; staff: { id: number; fio: string }[] }) {
+export async function CompanyForm({ c, staff }: { c?: CompanyRow | null; staff: { id: number; fio: string }[] }) {
+  const t = await getT();
   return (
     <form action={saveCompany} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {c && <input type="hidden" name="id" value={c.id} />}
@@ -17,12 +19,12 @@ export function CompanyForm({ c, staff }: { c?: CompanyRow | null; staff: { id: 
       <Field label="Hisob raqam" name="hisob_raqam" defaultValue={c?.hisob_raqam} />
       <Select label="Mas'ul xodim" name="masul_id" defaultValue={c?.masul_id ? String(c.masul_id) : ""} options={[["", "— tanlanmagan —"], ...staff.map((s) => [String(s.id), s.fio] as [string, string])]} />
       <div className="sm:col-span-2 lg:col-span-3">
-        <label className="label" htmlFor="izoh">Izoh</label>
+        <label className="label" htmlFor="izoh">{t("Izoh")}</label>
         <textarea id="izoh" name="izoh" className="input" rows={2} defaultValue={c?.izoh} />
       </div>
       <div className="sm:col-span-2 lg:col-span-3">
-        <button className="btn">{c ? "Saqlash" : "Qo'shish"}</button>
-        {!c && <span className="ml-3 text-xs text-ink-500">Rejimga mos soliq turlari va muddatlari avtomatik yaratiladi.</span>}
+        <button className="btn">{t(c ? "Saqlash" : "Qo'shish")}</button>
+        {!c && <span className="ml-3 text-xs text-ink-500">{t("Rejimga mos soliq turlari va muddatlari avtomatik yaratiladi.")}</span>}
       </div>
     </form>
   );

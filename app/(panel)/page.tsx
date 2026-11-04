@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { getT } from "@/lib/i18n";
 import { companyScope, requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { listCompanies } from "@/lib/data";
 import { dateUz } from "@/lib/format";
-import { LEVEL_LABEL, levelOf, type RiskFactor, type RiskLevel } from "@/lib/risk";
+import { levelLabel, levelOf, type RiskFactor, type RiskLevel } from "@/lib/risk";
+import { factorText } from "@/lib/i18n-risk";
 import { iso, periodHuman, todayTashkent, addDays } from "@/lib/tax-calendar";
 import { Card, LEVEL_STYLE, Notice, PageTitle, Pill, RiskBadge, Stat, Table } from "@/components/ui";
 
@@ -11,6 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Dashboard({ searchParams }: { searchParams: Promise<{ xato?: string }> }) {
   const u = await requireUser();
+  const t = await getT();
   const { xato } = await searchParams;
   const scope = companyScope(u);
   const sql = db();
@@ -41,31 +44,31 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageTitle title="Risk paneli" sub={`Bugun ${dateUz(iso(today))} · ${companies.length} ta korxona ${scope ? "sizga biriktirilgan" : "nazoratda"}`} />
+      <PageTitle title="Risk paneli" sub={t(scope ? "Bugun {d} · sizga biriktirilgan korxonalar: {n}" : "Bugun {d} · nazoratdagi korxonalar: {n}", { d: dateUz(iso(today)), n: companies.length })} />
 
       {xato && <Notice kind="err">{xato}</Notice>}
       {none && (
         <Card className="mb-6 border-brand-100 bg-brand-50">
           <p className="text-sm text-ink-700">
-            Hali korxona yo&apos;q. {u.role === "admin" ? <><Link className="link" href="/korxonalar/">Korxonalar</Link> bo&apos;limida birinchi mijozni qo&apos;shing — soliq muddatlari va risk avtomatik hisoblanadi.</> : "Rahbariyat sizga korxona biriktirishi kerak."}
+            {t("Hali korxona yo'q.")} {u.role === "admin" ? <><Link className="link" href="/korxonalar/">{t("Korxonalar")}</Link> {t("bo'limida birinchi mijozni qo'shing — soliq muddatlari va risk avtomatik hisoblanadi.")}</> : t("Rahbariyat sizga korxona biriktirishi kerak.")}
           </p>
         </Card>
       )}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Stat label="Kritik va yuqori risk" value={dist.kritik + dist.yuqori} tone={dist.kritik ? "bad" : dist.yuqori ? "warn" : "good"} hint={`${dist.kritik} kritik · ${dist.yuqori} yuqori`} href="/korxonalar/" />
+        <Stat label="Kritik va yuqori risk" value={dist.kritik + dist.yuqori} tone={dist.kritik ? "bad" : dist.yuqori ? "warn" : "good"} hint={`${dist.kritik} ${levelLabel("kritik", t.lang).toLowerCase()} · ${dist.yuqori} ${levelLabel("yuqori", t.lang).toLowerCase()}`} href="/korxonalar/" />
         <Stat label="Kechikkan hisobotlar" value={overdueN} tone={overdueN ? "bad" : "good"} href="/muddatlar/?f=kechikkan" />
         <Stat label="Javob kutayotgan xatlar" value={(letters as { n: number }[])[0].n} tone={(letters as { n: number }[])[0].n ? "warn" : "good"} href="/xatlar/" />
         <Stat label="Imzo kutayotgan EHF" value={(ehf as { n: number }[])[0].n} tone={(ehf as { n: number }[])[0].n ? "warn" : "good"} href="/ehf/" />
       </div>
 
       <Card title="Portfel bo'yicha risk taqsimoti" className="mt-6">
-        <div className="flex h-4 w-full overflow-hidden rounded-full bg-ink-100" role="img" aria-label="Risk taqsimoti">
-          {(Object.keys(dist) as RiskLevel[]).map((lv) => dist[lv] ? <div key={lv} className={LEVEL_STYLE[lv].bar} style={{ width: `${(dist[lv] / scored) * 100}%` }} title={`${LEVEL_LABEL[lv]}: ${dist[lv]}`} /> : null)}
+        <div className="flex h-4 w-full overflow-hidden rounded-full bg-ink-100" role="img" aria-label={t("Risk taqsimoti")}>
+          {(Object.keys(dist) as RiskLevel[]).map((lv) => dist[lv] ? <div key={lv} className={LEVEL_STYLE[lv].bar} style={{ width: `${(dist[lv] / scored) * 100}%` }} title={`${levelLabel(lv, t.lang)}: ${dist[lv]}`} /> : null)}
         </div>
         <div className="mt-3 flex flex-wrap gap-4 text-xs text-ink-700">
           {(Object.keys(dist) as RiskLevel[]).map((lv) => (
-            <span key={lv} className="flex items-center gap-1.5"><span className={`h-2.5 w-2.5 rounded-full ${LEVEL_STYLE[lv].bar}`} />{LEVEL_LABEL[lv]}: <b>{dist[lv]}</b></span>
+            <span key={lv} className="flex items-center gap-1.5"><span className={`h-2.5 w-2.5 rounded-full ${LEVEL_STYLE[lv].bar}`} />{levelLabel(lv, t.lang)}: <b>{dist[lv]}</b></span>
           ))}
         </div>
       </Card>
@@ -77,29 +80,29 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
               const f = topFactor.get(c.id);
               return (
                 <tr key={c.id}>
-                  <td><Link href={`/korxonalar/${c.id}/`} className="link">{c.nomi}</Link><div className="text-xs text-ink-500">{c.masul ?? "masul yo'q"}</div></td>
+                  <td><Link href={`/korxonalar/${c.id}/`} className="link">{c.nomi}</Link><div className="text-xs text-ink-500">{c.masul ?? t("mas'ul yo'q")}</div></td>
                   <td><RiskBadge score={c.ball} /></td>
-                  <td className="text-ink-700">{f ? <><b className="font-medium">{f.title}</b><div className="text-xs text-ink-500">{f.detail}</div></> : "—"}</td>
+                  <td className="text-ink-700">{f ? <><b className="font-medium">{factorText(f, t).title}</b><div className="text-xs text-ink-500">{factorText(f, t).detail}</div></> : "—"}</td>
                 </tr>
               );
             })}
           </Table>
         </Card>
-        <Card title="7 kun ichidagi muddatlar" className="lg:col-span-2" right={<Link href="/muddatlar/" className="text-xs link">Hammasi →</Link>}>
+        <Card title="7 kun ichidagi muddatlar" className="lg:col-span-2" right={<Link href="/muddatlar/" className="text-xs link">{t("Hammasi")} →</Link>}>
           <ul className="divide-y divide-ink-100 text-sm">
             {(upcoming as { id: number; davr: string; muddat: string; soliq: string; korxona: string; cid: number }[]).map((d) => {
               const late = d.muddat < iso(today);
               return (
                 <li key={d.id} className="flex items-start justify-between gap-3 py-2">
                   <div>
-                    <div className="font-medium">{d.soliq} <span className="font-normal text-ink-500">· {periodHuman(d.davr)}</span></div>
+                    <div className="font-medium">{t(d.soliq)} <span className="font-normal text-ink-500">· {periodHuman(d.davr, t.lang)}</span></div>
                     <Link href={`/korxonalar/${d.cid}/`} className="text-xs text-ink-500 hover:underline">{d.korxona}</Link>
                   </div>
-                  <Pill tone={late ? "bad" : d.muddat === iso(today) ? "warn" : "info"}>{late ? "kechikdi " : ""}{dateUz(d.muddat)}</Pill>
+                  <Pill tone={late ? "bad" : d.muddat === iso(today) ? "warn" : "info"}>{late ? `${t("kechikdi")} ` : ""}{dateUz(d.muddat)}</Pill>
                 </li>
               );
             })}
-            {!upcoming.length && <li className="py-6 text-center text-ink-500">Yaqin muddat yo&apos;q</li>}
+            {!upcoming.length && <li className="py-6 text-center text-ink-500">{t("Yaqin muddat yo'q")}</li>}
           </ul>
         </Card>
       </div>

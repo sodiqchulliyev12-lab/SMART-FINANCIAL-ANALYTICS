@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getT } from "@/lib/i18n";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { dateUz } from "@/lib/format";
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Leases({ searchParams }: { searchParams: Promise<{ ok?: string; xato?: string }> }) {
   const u = await requireUser();
+  const t = await getT();
   const sp = await searchParams;
   const sql = db();
   const today = todayTashkent();
@@ -32,7 +34,7 @@ export default async function Leases({ searchParams }: { searchParams: Promise<{
             <Field label="Ikkinchi tomon" name="tomon" />
             <Field label="Boshlanish" name="boshlanish" type="date" required />
             <Field label="Tugash" name="tugash" type="date" required />
-            <div className="self-end"><button className="btn">Saqlash</button></div>
+            <div className="self-end"><button className="btn">{t("Saqlash")}</button></div>
           </form>
         </AddBox>
       )}
@@ -45,12 +47,12 @@ export default async function Leases({ searchParams }: { searchParams: Promise<{
                 <td><Link href={`/korxonalar/${l.company_id}/`} className="link">{l.korxona}</Link></td>
                 <td>№{l.raqam}{l.tomon && <div className="text-xs text-ink-500">{l.tomon}</div>}</td>
                 <td className="whitespace-nowrap">{dateUz(l.b)} — {dateUz(l.t)}</td>
-                <td>{l.holati === "faol" ? <Pill tone={left < 0 ? "bad" : left <= 30 ? "warn" : "good"}>{left < 0 ? `${-left} kun o'tdi` : `${left} kun`}</Pill> : "—"}</td>
+                <td>{l.holati === "faol" ? <Pill tone={left < 0 ? "bad" : left <= 30 ? "warn" : "good"}>{left < 0 ? t("{n} kun o'tdi", { n: -left }) : t("{n} kun", { n: left })}</Pill> : "—"}</td>
                 <td>
                   <form action={setLeaseStatus} className="flex items-center gap-1">
                     <input type="hidden" name="id" value={l.id} />
-                    <select name="holati" defaultValue={l.holati} className="input w-auto py-1 text-xs" aria-label="Holat">
-                      <option value="faol">Faol</option><option value="tugagan">Tugagan</option><option value="bekor">Bekor qilingan</option>
+                    <select name="holati" defaultValue={l.holati} className="input w-auto py-1 text-xs" aria-label={t("Holat")}>
+                      <option value="faol">{t("Faol")}</option><option value="tugagan">{t("Tugagan")}</option><option value="bekor">{t("Bekor qilingan")}</option>
                     </select>
                     <button className="btn-sm">OK</button>
                   </form>
