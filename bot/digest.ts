@@ -1,7 +1,7 @@
 // Kunlik xulosa: har bir ulangan xodimga o'z korxonalari bo'yicha (rahbariyatga — hammasi).
-import { db } from "@/lib/db";
-import { LEVEL_LABEL, levelOf } from "@/lib/risk";
-import { addDays, iso, periodHuman } from "@/lib/tax-calendar";
+import { db } from "../lib/db";
+import { LEVEL_LABEL, levelOf } from "../lib/risk";
+import { addDays, iso, periodHuman } from "../lib/tax-calendar";
 import { esc, tgSend } from "./notify";
 
 const EMOJI = { past: "🟢", orta: "🟡", yuqori: "🟠", kritik: "🔴" } as const;

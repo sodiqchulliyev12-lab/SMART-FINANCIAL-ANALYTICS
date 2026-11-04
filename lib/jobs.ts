@@ -3,7 +3,7 @@
 import { db, setting } from "./db";
 import { generateDeadlines, recomputeAll } from "./data";
 import { iso, todayTashkent } from "./tax-calendar";
-import { sendDigests } from "@/bot/digest";
+import { sendDigests } from "../bot/digest";
 
 async function mark(kalit: string, qiymat: string) {
   await db()`INSERT INTO settings (kalit, qiymat) VALUES (${kalit}, ${qiymat}) ON CONFLICT (kalit) DO UPDATE SET qiymat = EXCLUDED.qiymat`;

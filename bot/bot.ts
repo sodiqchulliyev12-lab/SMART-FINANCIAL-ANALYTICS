@@ -1,7 +1,7 @@
 // Telegram bot (grammY, long polling — bitta Railway nusxasida). Xodim Profil'dan olgan 6 xonali kod bilan ulanadi.
 import { Bot } from "grammy";
-import { db } from "@/lib/db";
-import { todayTashkent } from "@/lib/tax-calendar";
+import { db } from "../lib/db";
+import { todayTashkent } from "../lib/tax-calendar";
 import { digestFor } from "./digest";
 import { esc } from "./notify";
 
