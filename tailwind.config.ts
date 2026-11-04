@@ -7,6 +7,7 @@ export default {
     extend: {
       colors: {
         surface: "rgb(var(--c-surface) / <alpha-value>)",
+        side: { DEFAULT: "rgb(var(--c-side) / <alpha-value>)", ink: "rgb(var(--c-side-ink) / <alpha-value>)", muted: "rgb(var(--c-side-muted) / <alpha-value>)" },
         series: { 1: "rgb(var(--c-s1) / <alpha-value>)", 2: "rgb(var(--c-s2) / <alpha-value>)", 3: "rgb(var(--c-s3) / <alpha-value>)" },
         ink: { 50: "rgb(var(--c-ink-50) / <alpha-value>)", 100: "rgb(var(--c-ink-100) / <alpha-value>)", 300: "rgb(var(--c-ink-300) / <alpha-value>)", 500: "rgb(var(--c-ink-500) / <alpha-value>)", 700: "rgb(var(--c-ink-700) / <alpha-value>)", 900: "rgb(var(--c-ink-900) / <alpha-value>)" },
         brand: { 50: "rgb(var(--c-brand-50) / <alpha-value>)", 100: "rgb(var(--c-brand-100) / <alpha-value>)", 400: "rgb(var(--c-brand-400) / <alpha-value>)", 500: "rgb(var(--c-brand-500) / <alpha-value>)", 600: "rgb(var(--c-brand-600) / <alpha-value>)", 700: "rgb(var(--c-brand-700) / <alpha-value>)", 900: "rgb(var(--c-brand-900) / <alpha-value>)" },

@@ -45,6 +45,9 @@
   --c-s2: 235 104 52;
   --c-s3: 27 175 122;
   --c-s4: 237 161 0;
+  --c-side: 26 31 42;
+  --c-side-ink: 236 239 244;
+  --c-side-muted: 152 161 178;
   color-scheme: light;
 }
 :root.dark {
@@ -90,6 +93,9 @@
   --c-s2: 217 89 38;
   --c-s3: 25 158 112;
   --c-s4: 201 133 0;
+  --c-side: 9 11 16;
+  --c-side-ink: 236 239 244;
+  --c-side-muted: 148 156 172;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {
@@ -136,6 +142,9 @@
   --c-s2: 217 89 38;
   --c-s3: 25 158 112;
   --c-s4: 201 133 0;
+  --c-side: 9 11 16;
+  --c-side-ink: 236 239 244;
+  --c-side-muted: 148 156 172;
     color-scheme: dark;
   }
 }
