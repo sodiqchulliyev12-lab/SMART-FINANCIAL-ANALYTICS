@@ -1,5 +1,5 @@
 // Telegram'ga xabar yuborish (bot ishlamayotgan bo'lsa ham API orqali). Matn HTML — foydalanuvchi ma'lumoti escape qilinadi.
-import { db } from "@/lib/db";
+import { db } from "../lib/db";
 
 export const esc = (s: unknown) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
