@@ -22,3 +22,10 @@ test("sessiya imzosi, muddati va soxtalashtirish", () => {
   assert.equal(readSession(t.replace(/^7\./, "8."), 1_000_001), null);
   assert.equal(readSession("garbage", 0), null);
 });
+
+import { parseMoney as pm } from "../lib/format";
+test("parseMoney: 1C/Excel formatlari", () => {
+  assert.equal(pm("(1 250 000)"), -1250000);
+  assert.equal(pm("1 250 000,50"), 1250000.5);
+  assert.equal(pm("1.250.000"), 1250000);
+});

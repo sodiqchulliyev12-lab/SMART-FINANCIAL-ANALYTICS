@@ -132,10 +132,11 @@ export async function importFinancials(f: FormData) {
   const cid = await companyGuard(u, int(f, "company_id"), "/korxonalar/");
   const path = `/korxonalar/${cid}/`;
   const text = str(f, "csv", 200_000);
-  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   if (lines.length < 2) back(path, { xato: "Sarlavha va kamida bitta qator kerak" });
   const sep = lines[0].includes(";") ? ";" : lines[0].includes("\t") ? "\t" : ",";
-  const head = lines[0].split(sep).map((h) => h.trim().toLowerCase());
+  const unq = (c: string) => c.trim().replace(/^"(.*)"$/, "$1").trim();
+  const head = lines[0].split(sep).map((h) => unq(h).toLowerCase());
   const known = new Set(["davr", ...FIN_FIELDS.map((x) => x.key)]);
   const unknown = head.filter((h) => !known.has(h));
   if (!head.includes("davr")) back(path, { xato: "Birinchi qatorda «davr» ustuni bo'lsin" });
@@ -143,7 +144,7 @@ export async function importFinancials(f: FormData) {
   const sql = db();
   let n = 0;
   for (const line of lines.slice(1)) {
-    const cells = line.split(sep);
+    const cells = line.split(sep).map(unq);
     const row: Record<string, number | string> = { company_id: cid };
     head.forEach((h, i) => {
       row[h] = h === "davr" ? cells[i]?.trim() ?? "" : parseMoney(cells[i] ?? "");
