@@ -29,6 +29,8 @@ Buxgalteriya (autsorsing) firmasi uchun sayt va Telegram bot. Firma o'z mijoz ko
 
 **Soliq xatlari, EHF, ijara.** Ma'lumot qo'lda kiritiladi yoki Soliq Monitor orqali avtomatik tushadi.
 
+**Ishchilar.** Har bir korxonada hozir nechta odam ishlayapti, 30 va 90 kunda kim kirdi, kim bo'shadi (my.mehnat.uz yoki qo'lda). Risk paneli faol xodim yo'qligini va 90 kunda xodimlarning 20% dan ko'pi ketganini ogohlantiradi. JShShIR bazada saqlanmaydi, faqat xeshi.
+
 **Bojxona.** Bojxona to'lovlari bo'yicha qarz (dep.customs.uz/qarzdor), tashqi savdo shartnomalari (contract.customs.uz) va yuk deklaratsiyalari (ed2.customs.uz). Risk paneli bojxona qarzini, 180 kun ichida qoplanmagan import avansi yoki eksport tushumini va muddati tugagan TIF shartnomalarini ogohlantiradi.
 
 **Telegram.** Har bir xodim o'z korxonalari bo'yicha kunlik xulosa oladi: risklar, ball keskin oshganlar va 3 kun ichidagi muddatlar. Yangi soliq xati kelsa, darhol xabar keladi. `/xulosa` buyrug'i joriy holatni ko'rsatadi.
@@ -87,7 +89,9 @@ Content-Type: application/json
   "tif_shartnomalar": [{ "stir": "305112233", "raqam": "TIF-2026/07", "turi": "import", "kontragent": "...", "davlat": "Xitoy", "valyuta": "USD",
                          "summa": 120000, "tolangan": 60000, "yetkazilgan": 25000, "ochiq_sana": "2026-03-10", "sana": "2026-03-02", "tugash": "2027-03-01", "holati": "faol" }],
   "deklaratsiyalar": [{ "stir": "305112233", "raqam": "26001/04.09.2026/0012345", "sana": "2026-09-04", "rejim": "IM40", "turi": "import",
-                        "shartnoma": "TIF-2026/07", "valyuta": "USD", "summa": 25000, "boj_tolov": 61500000, "holati": "rasmiylashtirildi" }]
+                        "shartnoma": "TIF-2026/07", "valyuta": "USD", "summa": 25000, "boj_tolov": 61500000, "holati": "rasmiylashtirildi" }],
+  "xodimlar": [{ "stir": "305112233", "jshshir": "30101900000000", "fio": "Aliyev Akmal", "lavozim": "Novvoy", "shartnoma": "muddatsiz",
+                 "kirgan": "2025-01-10", "ketgan": null }]
 }
 ```
 

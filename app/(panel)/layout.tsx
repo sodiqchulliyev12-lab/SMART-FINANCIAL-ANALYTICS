@@ -12,6 +12,7 @@ const NAV: (NavItem & { admin?: boolean })[] = [
   { href: "/ehf/", label: "EHF", icon: "🧾" },
   { href: "/ijara/", label: "Ijara", icon: "🏠" },
   { href: "/bojxona/", label: "Bojxona", icon: "🛃" },
+  { href: "/ishchilar/", label: "Ishchilar", icon: "👷" },
   { href: "/xodimlar/", label: "Xodimlar", icon: "👥", admin: true },
   { href: "/sozlamalar/", label: "Sozlamalar", icon: "⚙", admin: true },
   { href: "/jurnal/", label: "Jurnal", icon: "📜", admin: true },
