@@ -29,7 +29,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
     recomputeRisk(id, today),
     financialsOf(id),
     riskHistory(id),
-    sql`SELECT d.id, d.davr, to_char(d.muddat,'YYYY-MM-DD') AS muddat, d.hisobot_holati, d.tolov_holati, t.nomi AS soliq
+    sql`SELECT d.id, d.davr, to_char(d.muddat,'YYYY-MM-DD') AS muddat, d.hisobot_holati, d.tolov_holati, t.nomi AS soliq, t.turi
         FROM deadlines d JOIN tax_types t ON t.code = d.soliq
         WHERE d.company_id = ${id} AND (d.hisobot_holati = 'kutilmoqda' OR d.muddat >= current_date - 45)
         ORDER BY d.muddat LIMIT 30`,
@@ -172,7 +172,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
               const late = d.hisobot_holati === "kutilmoqda" && d.muddat < iso(today);
               return (
                 <tr key={d.id}>
-                  <td>{d.soliq}</td>
+                  <td>{d.soliq}{d.turi === "statistika" && <> <Pill tone="info">stat</Pill></>}</td>
                   <td>{periodHuman(d.davr)}</td>
                   <td><Pill tone={late ? "bad" : d.hisobot_holati === "topshirildi" ? "good" : "info"}>{dateUz(d.muddat)}</Pill></td>
                   <td>
@@ -206,14 +206,19 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
           <AddBox title="Rekvizitlarni tahrirlash"><CompanyForm c={c} staff={staff} /></AddBox>
           <form action={setCompanyTaxes} className="mb-6">
             <input type="hidden" name="id" value={id} />
-            <div className="label">Topshiriladigan soliq hisobotlari</div>
-            <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
-              {types.map((t) => (
-                <label key={t.code} className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" name="soliq" value={t.code} defaultChecked={linkedSet.has(t.code)} /> {t.nomi}
-                </label>
-              ))}
-            </div>
+            {(["soliq", "statistika"] as const).map((g) => (
+              <fieldset key={g} className="mb-4">
+                <legend className="label">{g === "soliq" ? "Topshiriladigan soliq hisobotlari" : "Statistika hisobotlari"}</legend>
+                {g === "statistika" && <p className="mb-2 text-xs text-ink-500">Korxona qaysi shakllarni topshirishini stat.uz «Taqdim etiladigan hisobotlar ro&apos;yxati» xizmatida (ERI bilan) ko&apos;ring va shu yerda belgilang.</p>}
+                <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
+                  {types.filter((t) => (t.turi ?? "soliq") === g).map((t) => (
+                    <label key={t.code} className="flex items-center gap-2 text-sm" title={t.izoh || undefined}>
+                      <input type="checkbox" name="soliq" value={t.code} defaultChecked={linkedSet.has(t.code)} /> {t.nomi}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ))}
             <button className="btn mt-3">Saqlash</button>
           </form>
           <form action={archiveCompany}>

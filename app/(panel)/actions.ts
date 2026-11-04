@@ -90,7 +90,7 @@ export async function setCompanyTaxes(f: FormData) {
   await audit(u.id, "soliqlar", `companies:${id}`, codes);
   await generateDeadlines(undefined, id);
   await afterChange(id, "/muddatlar/");
-  back(path, { ok: "Soliq turlari yangilandi" });
+  back(path, { ok: "Hisobotlar ro'yxati yangilandi" });
 }
 
 export async function archiveCompany(f: FormData) {
@@ -410,6 +410,22 @@ export async function saveSettings(f: FormData) {
   await recomputeAll();
   revalidatePath("/", "layout");
   back("/sozlamalar/", { ok: "Saqlandi, risklar qayta hisoblandi" });
+}
+
+export async function addTaxType(f: FormData) {
+  const u = await requireAdmin();
+  const nomi = str(f, "nomi", 100);
+  const davr = str(f, "davr");
+  const turi = str(f, "turi") === "statistika" ? "statistika" : "soliq";
+  const kun = Number(f.get("kun"));
+  const oy = Number(f.get("oy_offset"));
+  if (!nomi || !["oy", "chorak", "yil"].includes(davr)) back("/sozlamalar/", { xato: "Nomi va davrni kiriting" });
+  if (!(kun >= 1 && kun <= 31 && oy >= 0 && oy <= 12)) back("/sozlamalar/", { xato: "Kun 1–31, oy siljishi 0–12 bo'lsin" });
+  const code = `${turi === "statistika" ? "st" : "sq"}_${Date.now().toString(36)}`;
+  await db()`INSERT INTO tax_types (code, nomi, davr, oy_offset, kun, turi, izoh) VALUES (${code}, ${nomi}, ${davr}, ${oy}, ${kun}, ${turi}, ${str(f, "izoh", 500)})`;
+  await audit(u.id, "soliq_turi_qoshildi", `tax_types:${code}`, { nomi, davr, turi });
+  revalidatePath("/sozlamalar/");
+  back("/sozlamalar/", { ok: `«${nomi}» qo'shildi. Endi uni korxona sahifasida belgilang` });
 }
 
 export async function saveTaxType(f: FormData) {

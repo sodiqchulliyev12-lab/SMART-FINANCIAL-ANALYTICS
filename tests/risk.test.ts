@@ -86,3 +86,17 @@ test("bojxona: qarz va 180 kunlik TIF debitorligi", () => {
   assert.equal(late.points, 20, "faqat K1 muddati o'tgan");
   assert.match(late.detail, /30\s000 USD/);
 });
+
+test("statistika hisobotlari: alohida omil, soliq omiliga qo'shilmaydi", () => {
+  const r = assessRisk(empty({
+    deadlines: [
+      { soliq: "4-mehnat (choraklik)", turi: "statistika", davr: "2026-Q3", muddat: "2026-10-06", hisobot_holati: "kutilmoqda", tolov_holati: "yoq" },
+      { soliq: "12-korxona (oylik)", turi: "statistika", davr: "2026-10", muddat: "2026-11-05", hisobot_holati: "kutilmoqda", tolov_holati: "yoq" },
+    ],
+  }));
+  const codes = r.factors.map((f) => f.code);
+  assert.ok(codes.includes("stat_kechikdi"));
+  assert.ok(codes.includes("stat_yaqin"));
+  assert.ok(!codes.includes("hisobot_kechikdi"));
+  assert.equal(r.factors.find((f) => f.code === "stat_kechikdi")!.points, 8);
+});
