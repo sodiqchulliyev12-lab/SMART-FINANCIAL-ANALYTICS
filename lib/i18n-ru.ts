@@ -576,4 +576,6 @@ export const RU: Record<string, string> = {
   "Soddalashtirilgan": "Упрощённый",
   "Aylanmadan soliq": "Налог с оборота",
   "Aqilli Moliya — korxonalar moliyaviy holati va risklar": "Aqilli Moliya — финансовое состояние и риски организаций",
+  "Bugun": "Сегодня",
+  "korxona": "организаций",
 };

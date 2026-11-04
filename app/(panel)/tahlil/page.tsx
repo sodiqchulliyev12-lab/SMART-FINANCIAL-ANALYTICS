@@ -146,7 +146,7 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
     <>
       <PageTitle title="Moliyaviy tahlil" sub={`${periodLabel} · ${t("korxonalar: {n}", { n: cos.length })}${snap[0].d ? ` · ${t("yangilangan")} ${dateUz(snap[0].d)}` : ""}`} />
 
-      <form className="mb-5 grid gap-3 rounded-xl border border-ink-100 bg-surface p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-[repeat(5,minmax(0,1fr))_auto]" aria-label={t("Filtr")}>
+      <form className="mb-5 grid grid-cols-2 gap-3 rounded-xl border border-ink-100 bg-surface p-4 shadow-sm lg:grid-cols-[repeat(5,minmax(0,1fr))_auto]" aria-label={t("Filtr")}>
         {drill && <input type="hidden" name="p" value="chorak" />}
         <div>
           <label className="label" htmlFor="y">{t("Yil")}</label>
@@ -162,7 +162,7 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
             {[1, 2, 3, 4].map((q) => <option key={q} value={q}>{q}-{t("chorak")}</option>)}
           </select>
         </div>
-        <div>
+        <div className="col-span-2 lg:col-span-1">
           <label className="label" htmlFor="k">{t("Korxona")}</label>
           <select id="k" name="k" defaultValue={k ?? ""} className="input">
             <option value="">{t("Barcha korxonalar")}</option>
@@ -185,8 +185,8 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
             </select>
           </div>
         ) : <div className="hidden lg:block" />}
-        <div className="flex items-end gap-2">
-          <button className="btn">{t("Ko'rsatish")}</button>
+        <div className="col-span-2 flex items-end gap-2 lg:col-span-1">
+          <button className="btn flex-1 lg:flex-none">{t("Ko'rsatish")}</button>
           {filtered && <Link href="/tahlil/" className="btn-ghost">{t("Tozalash")}</Link>}
         </div>
       </form>
@@ -206,7 +206,7 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
           hint={dis.late ? t("{n} ta hisobot kechikkan", { n: dis.late }) : t("Kechikkan hisobot yo'q")} href={`/muddatlar/?f=kechikkan`} />
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-3">
+      <div className="mt-5 grid items-start gap-5 lg:grid-cols-3">
         <Card title={drill ? t("Tushum: {y} yil choraklari", { y }) : t("Tushum: yillar bo'yicha")}
           right={drill ? <Link href={href({ p: null, q: null })} className="text-xs font-medium text-brand-700 hover:underline">← {t("Yillarga qaytish")}</Link> : <span className="text-xs text-ink-500">{t("Yilni bosing → choraklar")}</span>}>
           <VBars items={bars} fmt={money} empty={t("Ma'lumot yo'q")} />
@@ -219,7 +219,7 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
         </Card>
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
+      <div className="mt-5 grid items-start gap-5 lg:grid-cols-2">
         <Card title={t("Ish navbati: korxonalar")}>
           <StackBars items={work} empty={t("Navbat bo'sh 👍")} series={[
             { label: t("Kechikkan hisobot"), color: C.s1 },
@@ -229,7 +229,7 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
         </Card>
         <Card title={t("Risk darajasi taqsimoti")}>
           <Donut items={(Object.keys(dist) as RiskLevel[]).map((lv) => ({ label: levelLabel(lv, L), value: dist[lv], color: riskColor[lv], href: lv === "past" ? undefined : "/korxonalar/" }))}
-            fmt={(v) => t("{n} ta", { n: v })} center={String(cos.filter((c) => c.ball !== null).length)} empty={t("Risk hali hisoblanmagan")} />
+            fmt={(v) => t("{n} ta", { n: v })} center={String(cos.filter((c) => c.ball !== null).length)} centerSub={t("korxona")} empty={t("Risk hali hisoblanmagan")} />
         </Card>
       </div>
       <Card title={t("Korxonalar bo'yicha ko'rsatkichlar")} className="mt-5">

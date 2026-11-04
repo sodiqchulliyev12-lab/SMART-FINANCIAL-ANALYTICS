@@ -10,7 +10,7 @@ export const C = {
   s3: "rgb(var(--c-s3))",
   s4: "rgb(var(--c-s4))",
   good: "rgb(var(--c-emerald-500))",
-  warn: "rgb(var(--c-amber-500))",
+  warn: "rgb(234 179 8)",
   serious: "rgb(var(--c-orange-500))",
   bad: "rgb(var(--c-red-500))",
   brand: "rgb(var(--c-brand-500))",
@@ -28,7 +28,7 @@ export function Kpi({ label, value, spark, pyLabel, py, delta, deltaUnit = "%", 
   label: string; value: string; spark: (number | null)[]; pyLabel: string; py: string; delta: number | null; deltaUnit?: string; upIsGood?: boolean; hint?: string; href?: string;
 }) {
   const pts = spark.map((v, i) => [i, v] as const).filter((p): p is readonly [number, number] => p[1] !== null);
-  const w = 72, h = 28;
+  const w = 200, h = 32;
   let path = "";
   if (pts.length >= 2) {
     const min = Math.min(...pts.map((p) => p[1])), max = Math.max(...pts.map((p) => p[1]));
@@ -41,23 +41,23 @@ export function Kpi({ label, value, spark, pyLabel, py, delta, deltaUnit = "%", 
   const body = (
     <div className="flex h-full flex-col rounded-xl border border-ink-100 bg-surface p-4 shadow-sm transition hover:border-brand-100">
       <p className="truncate text-xs font-medium text-ink-500" title={label}>{label}</p>
-      <div className="mt-1 flex items-center justify-between gap-2">
-        <p className="whitespace-nowrap text-2xl font-bold tabular-nums text-ink-900">{value}</p>
-        {path && (
-          <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="min-w-0 shrink overflow-visible" aria-hidden>
-            <path d={path} fill="none" stroke={C.brand} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-          </svg>
-        )}
-      </div>
-      <div className="mt-auto flex items-end justify-between gap-2 pt-3 text-xs">
-        <span className="text-ink-500">{pyLabel}: <span className="tabular-nums text-ink-700">{py}</span></span>
-        {delta !== null && (
-          <span className={`whitespace-nowrap font-semibold tabular-nums ${good === null ? "text-ink-500" : good ? "text-emerald-700" : "text-red-700"}`}>
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+        <p className="whitespace-nowrap text-2xl font-semibold tabular-nums text-ink-900 2xl:text-3xl">{value}</p>
+        {delta !== null ? (
+          <span className={`shrink-0 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums ${good === null ? "bg-ink-100 text-ink-500" : good ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
             {delta > 0 ? "▲" : delta < 0 ? "▼" : "•"} {Math.abs(delta).toFixed(1).replace(".", ",")}{deltaUnit}
           </span>
-        )}
+        ) : null}
       </div>
-      {hint && <p className="mt-1 text-[11px] text-ink-500">{hint}</p>}
+      <div className="mt-2 h-8">
+        {path ? (
+          <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" className="h-8 w-full overflow-visible" aria-hidden>
+            <path d={path} fill="none" stroke={C.brand} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+          </svg>
+        ) : <div className="h-px w-full translate-y-4 bg-ink-100" />}
+      </div>
+      <p className="mt-2 truncate text-xs text-ink-500">{pyLabel}: <span className="tabular-nums text-ink-700">{py}</span></p>
+      <p className="mt-0.5 min-h-[1rem] text-[11px] text-ink-500">{hint ?? "\u00a0"}</p>
     </div>
   );
   return href ? <Link href={href} className="block h-full">{body}</Link> : body;
@@ -94,7 +94,7 @@ export function VBars({ items, fmt, empty }: { items: Item[]; fmt: (v: number) =
 }
 
 /** Halqa diagramma + legenda (ulush va qiymat bilan) */
-export function Donut({ items, fmt, center, empty }: { items: (Item & { color: string })[]; fmt: (v: number) => string; center?: string; empty: string }) {
+export function Donut({ items, fmt, center, centerSub, empty }: { items: (Item & { color: string })[]; fmt: (v: number) => string; center?: string; centerSub?: string; empty: string }) {
   const list = items.filter((i) => i.value > 0);
   const total = list.reduce((s, i) => s + i.value, 0);
   if (!total) return <p className="py-10 text-center text-sm text-ink-500">{empty}</p>;
@@ -116,13 +116,14 @@ export function Donut({ items, fmt, center, empty }: { items: (Item & { color: s
           acc += len;
           return el;
         })}
-        {center && <text x="70" y="75" textAnchor="middle" fontSize="15" fontWeight="700" className="fill-ink-900 tabular-nums">{center}</text>}
+        {center && <text x="70" y={centerSub ? 70 : 75} textAnchor="middle" fontSize="15" fontWeight="700" className="fill-ink-900 tabular-nums">{center}</text>}
+        {centerSub && <text x="70" y="86" textAnchor="middle" fontSize="10" className="fill-ink-500">{centerSub}</text>}
       </svg>
       <ul className="w-full min-w-0 space-y-2 text-sm">
         {list.map((it) => (
-          <li key={it.label} className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: it.color }} />
-            {it.href ? <Link href={it.href} className="truncate text-ink-700 hover:underline">{it.label}</Link> : <span className="truncate text-ink-700">{it.label}</span>}
+          <li key={it.label} className="flex items-start gap-2">
+            <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: it.color }} />
+            {it.href ? <Link href={it.href} className="min-w-0 text-ink-700 hover:underline">{it.label}</Link> : <span className="min-w-0 text-ink-700">{it.label}</span>}
             <span className="ml-auto whitespace-nowrap tabular-nums text-ink-900"><b>{((it.value / total) * 100).toFixed(1).replace(".", ",")}%</b> <span className="text-xs text-ink-500">{fmt(it.value)}</span></span>
           </li>
         ))}
@@ -140,7 +141,7 @@ export function HBars({ items, fmt, empty, color = C.brand }: { items: Item[]; f
       {items.map((it) => {
         const pct = (Math.abs(it.value) / max) * 100;
         const row = (
-          <div className="grid grid-cols-[minmax(0,9rem)_1fr] items-center gap-3 text-sm" title={it.title ?? `${it.label}: ${fmt(it.value)}`}>
+          <div className="grid grid-cols-[minmax(0,40%)_1fr] items-center gap-3 text-sm" title={it.title ?? `${it.label}: ${fmt(it.value)}`}>
             <span className="truncate text-ink-700">{it.label}</span>
             <span className="flex items-center gap-2">
               <span className="h-5 rounded-r" style={{ width: `${Math.max(pct, 1.5)}%`, background: it.value < 0 ? C.bad : color, borderRadius: "0 4px 4px 0" }} />
@@ -164,7 +165,7 @@ export function StackBars({ items, series, empty }: { items: { label: string; pa
         {items.map((it) => {
           const tot = it.parts.reduce((s, v) => s + v, 0);
           const row = (
-            <div className="grid grid-cols-[minmax(0,9rem)_1fr] items-center gap-3 text-sm">
+            <div className="grid grid-cols-[minmax(0,40%)_1fr] items-center gap-3 text-sm">
               <span className="truncate text-ink-700" title={it.label}>{it.label}</span>
               <span className="flex items-center gap-2">
                 <span className="flex h-5 gap-[2px]" style={{ width: `${(tot / max) * 100}%` }}>
