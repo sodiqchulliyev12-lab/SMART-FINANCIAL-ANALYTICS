@@ -39,7 +39,7 @@ export type RiskInput = {
   today: Date;
   regime: string; // qqs | soddalashtirilgan | aylanma
   bhm: number; // bazaviy hisoblash miqdori, so'm
-  deadlines: { soliq: string; davr: string; muddat: string; hisobot_holati: string; tolov_holati: string }[];
+  deadlines: { soliq: string; turi?: string; davr: string; muddat: string; hisobot_holati: string; tolov_holati: string }[];
   letters: { raqam: string; tur: string; javob_muddati: string | null; holati: string }[];
   ehf: { raqam: string; kontragent: string; sana: string; holati: string; yonalish: string; xavfli: boolean; summa: number }[];
   leases: { raqam: string; tugash: string; holati: string }[];
@@ -86,7 +86,9 @@ export function assessRisk(input: RiskInput): RiskResult {
   const add = (x: RiskFactor) => x.points > 0 && f.push(x);
 
   // ── Soliq intizomi ──────────────────────────────────────────
-  const open = input.deadlines.filter((d) => d.hisobot_holati !== "topshirildi" || d.tolov_holati === "kutilmoqda");
+  const all = input.deadlines.filter((d) => d.hisobot_holati !== "topshirildi" || d.tolov_holati === "kutilmoqda");
+  const open = all.filter((d) => d.turi !== "statistika");
+  const statOpen = all.filter((d) => d.turi === "statistika" && d.hisobot_holati !== "topshirildi");
   const overdue = open.filter((d) => daysBetween(parseIso(d.muddat), today) > 0);
   if (overdue.length) {
     const worst = Math.max(...overdue.map((d) => daysBetween(parseIso(d.muddat), today)));
@@ -111,6 +113,32 @@ export function assessRisk(input: RiskInput): RiskResult {
       detail: soon.map((d) => `${d.soliq} (${d.davr}) — ${d.muddat}`).join(", "),
       points: Math.min(12, soon.length * 4),
       tavsiya: "Hisobotni tekshirib, muddatdan oldin topshiring. Soliq organi tuzgan hisobotni 5 kun ichida tuzatmasangiz, u qabul qilingan hisoblanadi.",
+    });
+  }
+
+  const statLate = statOpen.filter((d) => daysBetween(parseIso(d.muddat), today) > 0);
+  if (statLate.length) {
+    add({
+      code: "stat_kechikdi",
+      group: "soliq",
+      title: "Topshirilmagan statistika hisoboti",
+      detail: statLate.slice(0, 3).map((d) => `${d.soliq} (${d.davr}) — ${d.muddat}`).join(", "),
+      points: Math.min(16, statLate.length * 8),
+      tavsiya: "Statistika hisobotini o'z vaqtida topshirmaslik uchun ma'muriy jarima qo'llanadi. e-Stat orqali darhol topshiring.",
+    });
+  }
+  const statSoon = statOpen.filter((d) => {
+    const n = daysBetween(today, parseIso(d.muddat));
+    return n >= 0 && n <= 3;
+  });
+  if (statSoon.length) {
+    add({
+      code: "stat_yaqin",
+      group: "soliq",
+      title: "3 kun ichida statistika hisoboti",
+      detail: statSoon.map((d) => `${d.soliq} (${d.davr}) — ${d.muddat}`).join(", "),
+      points: Math.min(6, statSoon.length * 3),
+      tavsiya: "Shaklni e-Stat'da oldindan to'ldirib qo'ying.",
     });
   }
 

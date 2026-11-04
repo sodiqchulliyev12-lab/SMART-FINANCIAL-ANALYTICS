@@ -11,6 +11,10 @@ export type TaxType = {
   oy_offset: number;
   /** O'sha oyning nechanchi kuni */
   kun: number;
+  /** soliq (to'lovi bor) yoki statistika (faqat hisobot) */
+  turi?: "soliq" | "statistika";
+  /** Kim topshiradi: qisqa izoh */
+  izoh?: string;
 };
 
 /**
@@ -29,7 +33,29 @@ export const DEFAULT_TAX_TYPES: TaxType[] = [
   { code: "moliyaviy", nomi: "Moliyaviy hisobot (chorak)", davr: "chorak", oy_offset: 1, kun: 25 },
   { code: "mol_mulk", nomi: "Mol-mulk solig'i (yillik)", davr: "yil", oy_offset: 3, kun: 1 },
   { code: "yer", nomi: "Yer solig'i (yillik)", davr: "yil", oy_offset: 2, kun: 1 },
+  ...STAT_TYPES(),
 ];
+
+/**
+ * Statistika hisobotlari (stat.uz, 2026 yil shakllari; muddatlar taxminiy). Har bir korxona qaysi shaklni
+ * topshirishi stat.uz «Taqdim etiladigan hisobotlar ro'yxati» xizmatida (ERI bilan) ko'rinadi — korxona
+ * sahifasida shu ro'yxat bo'yicha belgilanadi. Kichik korxona va mikrofirmalar ko'p shakllardan ozod.
+ */
+function STAT_TYPES(): TaxType[] {
+  const st = (code: string, nomi: string, davr: Periodicity, oy_offset: number, kun: number, izoh: string): TaxType =>
+    ({ code, nomi, davr, oy_offset, kun, turi: "statistika", izoh });
+  return [
+    st("st_1korxona", "1-korxona (yillik asosiy ko'rsatkichlar)", "yil", 4, 1, "Barcha korxonalar; xodimi 5 tadan kam yoki tushumi 2000 BHM gacha mikro va kichik korxonalar 3 yilda bir marta. MHXS bo'yicha hisobot yurituvchilar 5-maygacha"),
+    st("st_12korxona", "12-korxona (oylik)", "oy", 1, 5, "Tijorat yuridik shaxslari; kichik korxona, mikrofirma va qishloq xo'jaligi ishlab chiqaruvchilari bundan mustasno"),
+    st("st_4mehnat", "4-mehnat (choraklik)", "chorak", 1, 6, "Yuridik shaxslar; kichik korxona va mikrofirmalar bundan mustasno"),
+    st("st_4invest", "4-invest asosiy (choraklik)", "chorak", 1, 6, "Investitsiya faoliyati yurituvchi yuridik shaxslar (ayrim kichik korxonalar ozod)"),
+    st("st_4invest_x", "4-invest xorijiy (choraklik)", "chorak", 1, 29, "Xorijiy investitsiyali korxonalar, xorijdan mablag' oluvchilar, eksport/import qiluvchilar"),
+    st("st_4transport", "4-transport (choraklik)", "chorak", 1, 5, "5 tadan ortiq avtotransporti bor yuridik shaxslar (kichik korxonalar bundan mustasno)"),
+    st("st_4fx", "4-fx (fermer xo'jaligi, choraklik)", "chorak", 1, 5, "Fermer xo'jaliklari"),
+    st("st_4miz", "4-MIZ (erkin iqtisodiy zona, choraklik)", "chorak", 1, 20, "EIZ, KSIZ, texnopark va klaster ishtirokchilari"),
+    st("st_4kb", "4-kb tanlanma kuzatuv (choraklik)", "chorak", 1, 5, "Faqat tanlanma ro'yxatiga kiritilgan kichik korxona va mikrofirmalar"),
+  ];
+}
 
 /** Soliq rejimiga qarab yangi korxonaga avtomatik belgilanadigan soliqlar */
 export const TAXES_BY_REGIME: Record<string, string[]> = {

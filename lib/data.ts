@@ -52,7 +52,7 @@ export async function loadCalendar(): Promise<Calendar> {
 }
 
 export async function taxTypes(): Promise<TaxType[]> {
-  return db()<TaxType[]>`SELECT code, nomi, davr, oy_offset, kun FROM tax_types ORDER BY nomi`;
+  return db()<TaxType[]>`SELECT code, nomi, davr, oy_offset, kun, turi, izoh FROM tax_types ORDER BY turi, nomi`;
 }
 
 /** Har bir faol korxona × belgilangan soliq uchun muddati [bugun−120, bugun+60] oralig'idagi yozuvlarni yaratadi */
@@ -65,17 +65,17 @@ export async function generateDeadlines(today = todayTashkent(), companyId?: num
     WHERE NOT c.arxiv ${companyId ? sql`AND c.id = ${companyId}` : sql``}`;
   const from = addDays(today, -120);
   const to = addDays(today, 60);
-  const rows: { company_id: number; soliq: string; davr: string; muddat: string }[] = [];
+  const rows: { company_id: number; soliq: string; davr: string; muddat: string; tolov_holati: string }[] = [];
   for (const l of links) {
     const t = types.get(l.soliq);
     if (!t) continue;
-    for (const d of deadlinesBetween(t, from, to, cal)) rows.push({ company_id: l.company_id, soliq: l.soliq, ...d });
+    for (const d of deadlinesBetween(t, from, to, cal)) rows.push({ company_id: l.company_id, soliq: l.soliq, ...d, tolov_holati: t.turi === "statistika" ? "yoq" : "kutilmoqda" });
   }
   if (!rows.length) return 0;
   let created = 0;
   for (let i = 0; i < rows.length; i += 500) {
     const chunk = rows.slice(i, i + 500);
-    const res = await sql`INSERT INTO deadlines ${sql(chunk, "company_id", "soliq", "davr", "muddat")}
+    const res = await sql`INSERT INTO deadlines ${sql(chunk, "company_id", "soliq", "davr", "muddat", "tolov_holati")}
       ON CONFLICT (company_id, soliq, davr) DO UPDATE SET muddat = EXCLUDED.muddat
         WHERE deadlines.hisobot_holati = 'kutilmoqda' AND deadlines.muddat <> EXCLUDED.muddat
       RETURNING (xmax = 0) AS inserted`;
@@ -93,7 +93,7 @@ export async function riskInput(companyId: number, today = todayTashkent()): Pro
   const c = await getCompany(companyId);
   if (!c) return null;
   const [deadlines, letters, ehf, leases, financials, bhm, debt, contracts] = await Promise.all([
-    sql`SELECT t.nomi AS soliq, d.davr, to_char(d.muddat,'YYYY-MM-DD') AS muddat, d.hisobot_holati, d.tolov_holati
+    sql`SELECT t.nomi AS soliq, t.turi, d.davr, to_char(d.muddat,'YYYY-MM-DD') AS muddat, d.hisobot_holati, d.tolov_holati
         FROM deadlines d JOIN tax_types t ON t.code = d.soliq
         WHERE d.company_id = ${companyId} AND d.muddat <= ${iso(addDays(today, 3))}
           AND (d.hisobot_holati = 'kutilmoqda' OR d.tolov_holati = 'kutilmoqda')`,

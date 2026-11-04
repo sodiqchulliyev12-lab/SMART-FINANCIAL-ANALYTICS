@@ -9,29 +9,30 @@ import { markDeadline } from "../actions";
 
 export const dynamic = "force-dynamic";
 
-const FILTERS: Record<string, string> = { yaqin: "30 kun ichida", kechikkan: "Kechikkanlar", tolov: "To'lanmaganlar", topshirilgan: "Topshirilganlar" };
+const FILTERS: Record<string, string> = { yaqin: "30 kun ichida", kechikkan: "Kechikkanlar", tolov: "To'lanmaganlar", statistika: "Statistika", topshirilgan: "Topshirilganlar" };
 
 export default async function Deadlines({ searchParams }: { searchParams: Promise<{ f?: string; ok?: string; xato?: string }> }) {
   const u = await requireUser();
   const sp = await searchParams;
-  const f = (sp.f && sp.f in FILTERS ? sp.f : "yaqin") as "yaqin" | "kechikkan" | "tolov" | "topshirilgan";
+  const f = (sp.f && sp.f in FILTERS ? sp.f : "yaqin") as "yaqin" | "kechikkan" | "tolov" | "statistika" | "topshirilgan";
   const sql = db();
   const today = iso(todayTashkent());
   const cond = {
     yaqin: sql`d.hisobot_holati = 'kutilmoqda' AND d.muddat <= ${iso(addDays(todayTashkent(), 30))}`,
     kechikkan: sql`d.hisobot_holati = 'kutilmoqda' AND d.muddat < ${today}`,
     tolov: sql`d.tolov_holati = 'kutilmoqda' AND d.muddat <= ${iso(addDays(todayTashkent(), 30))}`,
+    statistika: sql`t.turi = 'statistika' AND d.hisobot_holati = 'kutilmoqda' AND d.muddat <= ${iso(addDays(todayTashkent(), 45))}`,
     topshirilgan: sql`d.hisobot_holati = 'topshirildi' AND d.muddat >= ${iso(addDays(todayTashkent(), -60))}`,
   }[f];
   const rows = await sql`
-    SELECT d.id, d.davr, to_char(d.muddat,'YYYY-MM-DD') AS muddat, d.hisobot_holati, d.tolov_holati, t.nomi AS soliq, c.nomi AS korxona, c.id AS cid
+    SELECT d.id, d.davr, to_char(d.muddat,'YYYY-MM-DD') AS muddat, d.hisobot_holati, d.tolov_holati, t.nomi AS soliq, t.turi, c.nomi AS korxona, c.id AS cid
     FROM deadlines d JOIN tax_types t ON t.code = d.soliq JOIN companies c ON c.id = d.company_id
     WHERE ${cond} ${scopeSql(u)}
     ORDER BY d.muddat, c.nomi LIMIT 500`;
   const back = `/muddatlar/?f=${f}`;
   return (
     <>
-      <PageTitle title="Hisobot va to'lov muddatlari" sub="Muddatlar har kuni avtomatik yaratiladi; dam olish va bayram kunlari keyingi ish kuniga suriladi." />
+      <PageTitle title="Hisobot va to'lov muddatlari" sub="Soliq va statistika hisobotlari. Muddatlar har kuni avtomatik yaratiladi; dam olish va bayram kunlari keyingi ish kuniga suriladi." />
       {sp.ok && <Notice>{sp.ok}</Notice>}
       {sp.xato && <Notice kind="err">{sp.xato}</Notice>}
       <div className="mb-4 flex flex-wrap gap-2">
@@ -40,7 +41,7 @@ export default async function Deadlines({ searchParams }: { searchParams: Promis
         ))}
       </div>
       <Card>
-        <Table head={["Muddat", "Korxona", "Soliq", "Davr", "Hisobot", "To'lov"]}>
+        <Table head={["Muddat", "Korxona", "Hisobot turi", "Davr", "Hisobot", "To'lov"]}>
           {rows.map((d) => {
             const late = d.hisobot_holati === "kutilmoqda" && d.muddat < today;
             const Btn = ({ field, value, label }: { field: string; value: string; label: string }) => (
@@ -54,11 +55,11 @@ export default async function Deadlines({ searchParams }: { searchParams: Promis
               <tr key={d.id} className={late ? "bg-red-50/50" : ""}>
                 <td><Pill tone={late ? "bad" : d.muddat === today ? "warn" : "info"}>{dateUz(d.muddat)}</Pill></td>
                 <td><Link href={`/korxonalar/${d.cid}/`} className="link">{d.korxona}</Link></td>
-                <td>{d.soliq}</td>
+                <td>{d.soliq}{d.turi === "statistika" && <> <Pill tone="info">stat</Pill></>}</td>
                 <td className="text-ink-700">{periodHuman(d.davr)}</td>
                 <td>{d.hisobot_holati === "topshirildi" ? <Btn field="hisobot_holati" value="kutilmoqda" label="✓ topshirilgan" /> : <Btn field="hisobot_holati" value="topshirildi" label="Topshirildi" />}</td>
                 <td className="space-x-1 whitespace-nowrap">
-                  {d.tolov_holati === "kutilmoqda" ? (<><Btn field="tolov_holati" value="tolandi" label="To'landi" /><Btn field="tolov_holati" value="yoq" label="To'lov yo'q" /></>)
+                  {d.turi === "statistika" ? <span className="text-xs text-ink-500">to&apos;lovsiz</span> : d.tolov_holati === "kutilmoqda" ? (<><Btn field="tolov_holati" value="tolandi" label="To'landi" /><Btn field="tolov_holati" value="yoq" label="To'lov yo'q" /></>)
                     : <Btn field="tolov_holati" value="kutilmoqda" label={d.tolov_holati === "tolandi" ? "✓ to'langan" : "— to'lov yo'q"} />}
                 </td>
               </tr>

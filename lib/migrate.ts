@@ -22,7 +22,8 @@ export async function migrate(dir = path.join(process.cwd(), "migrations")) {
       console.log(`[db] migratsiya bajarildi: ${f}`);
     }
     for (const t of DEFAULT_TAX_TYPES) {
-      await sql`INSERT INTO tax_types ${sql(t, "code", "nomi", "davr", "oy_offset", "kun")} ON CONFLICT (code) DO NOTHING`;
+      const row = { turi: "soliq", izoh: "", ...t };
+      await sql`INSERT INTO tax_types ${sql(row, "code", "nomi", "davr", "oy_offset", "kun", "turi", "izoh")} ON CONFLICT (code) DO NOTHING`;
     }
     await ensureAdmin();
   } finally {

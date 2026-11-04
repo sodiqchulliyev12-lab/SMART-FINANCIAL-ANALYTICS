@@ -23,6 +23,8 @@ Buxgalteriya (autsorsing) firmasi uchun sayt va Telegram bot. Firma o'z mijoz ko
 
 **Moliyaviy tahlil.** Har chorakda balans va moliyaviy natijalar kiritiladi yoki 1C/Excel'dan CSV qilib yuklanadi. Sayt 12 ta koeffitsiyentni hisoblaydi va me'yor bilan solishtiradi: likvidlik (joriy, tezkor, mutlaq), moliyaviy mustaqillik, qarz yuki, marja, rentabellik, ROA, debitorlik va kreditorlik aylanishi, soliq yuki va pul zaxirasi. Tushum va foyda dinamikasi grafikda ko'rinadi.
 
+**Statistika hisobotlari.** 2026 yil shakllari (1-korxona, 12-korxona, 4-mehnat, 4-invest, 4-transport, 4-fx, 4-MIZ, 4-kb). Har bir korxonaga kerakli shakllar uning sahifasida belgilanadi (ro'yxat stat.uz «Taqdim etiladigan hisobotlar ro'yxati» xizmatida ko'rinadi). Yangi shaklni Sozlamalar'dan qo'shish mumkin. Muddatlar soliq hisobotlari bilan bitta jadvalda, to'lovsiz.
+
 **Hisobot muddatlari.** Korxonaning soliq rejimiga qarab muddatlar har kuni avtomatik yaratiladi. Dam olish yoki bayram kuniga tushgan muddat keyingi ish kuniga suriladi. Har bir muddatga «Topshirildi» va «To'landi» belgisi qo'yiladi.
 
 **Soliq xatlari, EHF, ijara.** Ma'lumot qo'lda kiritiladi yoki Soliq Monitor orqali avtomatik tushadi.

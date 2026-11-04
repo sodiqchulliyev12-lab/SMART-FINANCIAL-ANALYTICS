@@ -40,3 +40,12 @@ test("davr nomlari", () => {
   assert.equal(periodHuman("2026-Q3"), "3-chorak 2026");
   assert.equal(periodHuman("2026"), "2026 yil");
 });
+
+test("statistika: 1-korxona yillik — keyingi yil 1-aprel, 4-mehnat — chorakdan keyin 6-kun", () => {
+  const cal = { holidays: new Set<string>(), workdays: new Set<string>() };
+  const k = DEFAULT_TAX_TYPES.find((t) => t.code === "st_1korxona")!;
+  assert.equal(k.turi, "statistika");
+  assert.deepEqual(deadlinesBetween(k, parseIso("2027-01-01"), parseIso("2027-12-31"), cal), [{ davr: "2026", muddat: "2027-04-01" }]);
+  const m = DEFAULT_TAX_TYPES.find((t) => t.code === "st_4mehnat")!;
+  assert.deepEqual(deadlinesBetween(m, parseIso("2026-10-01"), parseIso("2026-10-31"), cal), [{ davr: "2026-Q3", muddat: "2026-10-06" }]);
+});
