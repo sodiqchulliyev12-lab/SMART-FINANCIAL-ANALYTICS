@@ -23,7 +23,9 @@ export function dateUz(s: string | Date | null | undefined): string {
 
 /** "1 250 000,50" yoki "1.250.000" ni raqamga aylantirish */
 export function parseMoney(s: FormDataEntryValue | null): number {
-  const t = String(s ?? "").replace(/[\s ]/g, "").replace(/,(?=\d{1,2}$)/, ".").replace(/[,'](?=\d{3})/g, "");
+  let t = String(s ?? "").replace(/[\s\u00a0\u202f]/g, "");
+  if (/^\(.*\)$/.test(t)) t = "-" + t.slice(1, -1); // 1C/Excel: (1 250 000) = manfiy
+  t = t.replace(/,(?=\d{1,2}$)/, ".").replace(/[,'](?=\d{3})/g, "");
   if (!t) return 0;
   const n = Number(t.replace(/\.(?=\d{3}(\D|$))/g, ""));
   return Number.isFinite(n) ? n : NaN;
