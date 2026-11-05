@@ -8,8 +8,6 @@ import { Bell } from "@/components/Bell";
 import { HistoryNav } from "@/components/HistoryNav";
 import { Crumb, Nav } from "./nav";
 import { NAV } from "@/lib/nav";
-import { dateUz } from "@/lib/format";
-import { iso, todayTashkent } from "@/lib/tax-calendar";
 
 async function doLogout() {
   "use server";
@@ -45,12 +43,12 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 bg-side px-4 text-side-ink print:hidden md:px-6">
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 shrink-0 items-center gap-3">
             <HistoryNav back={t("Orqaga")} forward={t("Oldinga")} />
             <Crumb items={items} />
-            <span className="hidden shrink-0 text-xs text-side-muted sm:inline">{t("Bugun")} {dateUz(iso(todayTashkent()))}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div id="header-slot" className="hidden min-w-0 max-w-2xl flex-1 md:flex" />
+          <div className="flex shrink-0 items-center gap-2">
             <Bell user={user} />
             <Prefs dark />
             <span className="hidden max-w-[10rem] truncate text-xs text-side-muted lg:inline">{user.fio}</span>
