@@ -4,6 +4,7 @@ import { currentUser, logout } from "@/lib/auth";
 import { setting } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { Prefs } from "@/components/Prefs";
+import { Bell } from "@/components/Bell";
 import { Crumb, Nav } from "./nav";
 import { NAV } from "@/lib/nav";
 import { dateUz } from "@/lib/format";
@@ -48,6 +49,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
             <span className="hidden shrink-0 text-xs text-side-muted sm:inline">{t("Bugun")} {dateUz(iso(todayTashkent()))}</span>
           </div>
           <div className="flex items-center gap-2">
+            <Bell user={user} />
             <Prefs dark />
             <span className="hidden max-w-[10rem] truncate text-xs text-side-muted lg:inline">{user.fio}</span>
             <form action={doLogout}>

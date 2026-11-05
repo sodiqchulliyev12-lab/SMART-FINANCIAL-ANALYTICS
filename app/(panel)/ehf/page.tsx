@@ -27,7 +27,7 @@ export default async function Ehf({ searchParams }: { searchParams: Promise<{ ha
   );
   return (
     <>
-      <PageTitle title="Elektron hisob-fakturalar" sub="Didox'da imzo kutayotgan fakturalar. 5 kundan uzoq kutgan va xavfli kontragentli fakturalar riskni oshiradi."
+      <PageTitle section title="Elektron hisob-fakturalar" sub="Didox'da imzo kutayotgan fakturalar. 5 kundan uzoq kutgan va xavfli kontragentli fakturalar riskni oshiradi."
         right={<Link href={all ? "/ehf/" : "/ehf/?hammasi=1"} className="btn-ghost">{t(all ? "Faqat imzo kutayotganlar" : "Hammasi")}</Link>} />
       {sp.ok && <Notice>{sp.ok}</Notice>}
       {sp.xato && <Notice kind="err">{sp.xato}</Notice>}

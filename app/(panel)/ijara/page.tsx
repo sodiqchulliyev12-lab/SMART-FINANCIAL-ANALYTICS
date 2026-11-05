@@ -23,7 +23,7 @@ export default async function Leases({ searchParams }: { searchParams: Promise<{
   ]);
   return (
     <>
-      <PageTitle title="Ijara shartnomalari" sub="ijara.soliq.uz'dagi shartnomalar. Tugashiga 30 kun qolganda va tugagach risk paneli ogohlantiradi." />
+      <PageTitle section title="Ijara shartnomalari" sub="ijara.soliq.uz'dagi shartnomalar. Tugashiga 30 kun qolganda va tugagach risk paneli ogohlantiradi." />
       {sp.ok && <Notice>{sp.ok}</Notice>}
       {sp.xato && <Notice kind="err">{sp.xato}</Notice>}
       {opts.length > 0 && (

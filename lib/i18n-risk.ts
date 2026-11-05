@@ -16,6 +16,8 @@ const DETAIL_RU: [RegExp, string][] = [
   [/\(dep\.customs\.uz qarzdorlar ro'yxati\)/g, "(реестр должников dep.customs.uz)"],
   [/import avansi qoplanmagan/g, "импортный аванс не закрыт"],
   [/eksport tushumi kelmagan/g, "экспортная выручка не поступила"],
+  [/(\d+) ta mezon: /g, "критериев: $1: "],
+  [/(\d+) ta faktura qizil belgilangan/g, "$1 счетов-фактур отмечено красным"],
   [/(\d+) kun qoldi/g, "осталось $1 дн."],
   [/my\.mehnat\.uz bo'yicha korxonada rasmiylashtirilgan xodim ko'rinmayapti/g, "по my.mehnat.uz в организации нет оформленных работников"],
   [/90 kunda (\d+) kishi ketdi \((\d+)%\), (\d+) kishi keldi\. Hozir (\d+) kishi/g, "за 90 дней ушли $1 чел. ($2%), пришли $3. Сейчас $4 чел."],

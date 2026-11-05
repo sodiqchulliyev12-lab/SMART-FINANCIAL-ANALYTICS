@@ -6,6 +6,7 @@ import { getT } from "@/lib/i18n";
 import { companyOptions, scopeSql } from "@/lib/scope";
 import { addDays, iso, monthName, periodHuman, todayTashkent } from "@/lib/tax-calendar";
 import { Card, Notice, PageTitle, Pill, Stat, Table } from "@/components/ui";
+import { FilterBar } from "@/components/FilterBar";
 import { markDeadline } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ const FILTERS = {
 } as const;
 type F = keyof typeof FILTERS;
 
-type Sp = { f?: string; y?: string; m?: string; k?: string; ok?: string; xato?: string };
+type Sp = { f?: string; y?: string; m?: string; k?: string; q?: string; ok?: string; xato?: string };
 
 export default async function Deadlines({ searchParams }: { searchParams: Promise<Sp> }) {
   const u = await requireUser();
@@ -33,6 +34,7 @@ export default async function Deadlines({ searchParams }: { searchParams: Promis
   const month = year && /^(1[0-2]|[1-9])$/.test(sp.m ?? "") ? Number(sp.m) : null;
   const opts = await companyOptions(u);
   const k = opts.some(([id]) => id === sp.k) ? Number(sp.k) : null;
+  const qs = (sp.q ?? "").trim().slice(0, 100);
   const sql = db();
 
   // Davr: yil/oy tanlansa — o'sha davrga tushgan muddatlar; aks holda holatga mos «yaqin» oyna
@@ -60,7 +62,7 @@ export default async function Deadlines({ searchParams }: { searchParams: Promis
     hammasi: sql`TRUE`,
   }[f];
   const base = sql`FROM deadlines d JOIN tax_types t ON t.code = d.soliq JOIN companies c ON c.id = d.company_id
-    WHERE d.muddat BETWEEN ${from} AND ${to} ${k ? sql`AND c.id = ${k}` : sql``} ${scopeSql(u)}`;
+    WHERE d.muddat BETWEEN ${from} AND ${to} ${k ? sql`AND c.id = ${k}` : sql``} ${qs ? sql`AND (c.nomi ILIKE ${`%${qs}%`} OR c.stir LIKE ${`${qs.replace(/\D/g, "") || "-"}%`})` : sql``} ${scopeSql(u)}`;
   const [rows, [sum]] = await Promise.all([
     sql`SELECT d.id, d.davr, to_char(d.muddat,'YYYY-MM-DD') AS muddat, d.hisobot_holati, d.tolov_holati, t.nomi AS soliq, t.turi, c.nomi AS korxona, c.id AS cid
         ${base} AND ${status} ORDER BY d.muddat, c.nomi LIMIT 1000`,
@@ -71,9 +73,9 @@ export default async function Deadlines({ searchParams }: { searchParams: Promis
         ${base}`,
   ]);
 
-  const q = (over: Partial<Record<"f" | "y" | "m" | "k", string | number | null>>) => {
+  const q = (over: Partial<Record<"f" | "y" | "m" | "k" | "q", string | number | null>>) => {
     const p = new URLSearchParams();
-    const v = { f, y: year, m: month, k, ...over };
+    const v = { f, y: year, m: month, k, q: qs || null, ...over };
     for (const [key, val] of Object.entries(v)) if (val !== null && val !== undefined && val !== "" && !(key === "f" && val === "yaqin")) p.set(key, String(val));
     const s = p.toString();
     return `/muddatlar/${s ? `?${s}` : ""}`;
@@ -87,12 +89,11 @@ export default async function Deadlines({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageTitle title="Hisobot va to'lov muddatlari" sub="Soliq va statistika hisobotlari. Muddatlar har kuni avtomatik yaratiladi; dam olish va bayram kunlari keyingi ish kuniga suriladi." />
+      <PageTitle section title="Hisobot va to'lov muddatlari" sub="Soliq va statistika hisobotlari. Muddatlar har kuni avtomatik yaratiladi; dam olish va bayram kunlari keyingi ish kuniga suriladi." />
       {sp.ok && <Notice>{sp.ok}</Notice>}
       {sp.xato && <Notice kind="err">{sp.xato}</Notice>}
 
-      <form className="mb-4 grid gap-3 rounded-xl border border-ink-100 bg-surface p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-[1fr_1fr_2fr_auto]" aria-label={t("Filtr")}>
-        {f !== "yaqin" && <input type="hidden" name="f" value={f} />}
+      <FilterBar q={qs} hidden={{ f: f === "yaqin" ? null : f }} active={(year ? 1 : 0) + (month ? 1 : 0) + (k ? 1 : 0)} clearHref={q({ y: null, m: null, k: null, q: null })}>
         <div>
           <label className="label" htmlFor="y">{t("Yil")}</label>
           <select id="y" name="y" defaultValue={year ?? ""} className="input">
@@ -106,6 +107,7 @@ export default async function Deadlines({ searchParams }: { searchParams: Promis
             <option value="">{t("Butun yil")}</option>
             {Array.from({ length: 12 }, (_, i) => <option key={i} value={i + 1}>{monthName(i, t.lang)}</option>)}
           </select>
+          <p className="mt-1 text-[11px] text-ink-500">{t("Oy faqat yil tanlanganda ishlaydi.")}</p>
         </div>
         <div>
           <label className="label" htmlFor="k">{t("Korxona")}</label>
@@ -114,12 +116,7 @@ export default async function Deadlines({ searchParams }: { searchParams: Promis
             {opts.map(([id, nomi]) => <option key={id} value={id}>{nomi}</option>)}
           </select>
         </div>
-        <div className="flex items-end gap-2">
-          <button className="btn">{t("Ko'rsatish")}</button>
-          {(year || k) && <Link href={q({ y: null, m: null, k: null })} className="btn-ghost">{t("Tozalash")}</Link>}
-        </div>
-      </form>
-      <p className="mb-3 text-xs text-ink-500">{t("Oy faqat yil tanlanganda ishlaydi.")}</p>
+      </FilterBar>
 
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Jami muddatlar" value={sum.jami} hint={periodLabel} />

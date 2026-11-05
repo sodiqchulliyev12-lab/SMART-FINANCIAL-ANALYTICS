@@ -19,6 +19,7 @@ type Declaration = {
   stir: string; raqam: string; sana: string; rejim?: string; turi?: string; shartnoma?: string;
   valyuta?: string; summa?: number; boj_tolov?: number; holati?: string;
 };
+type AiSoliqIn = { stir: string; sana?: string; reyting?: string; qarz?: number; kamchiliklar?: string[]; avtokameral?: string[]; ehf_xavfli?: number; imtiyozlar?: string[] };
 type Worker = { stir: string; jshshir?: string; fio?: string; lavozim?: string; shartnoma?: string; kirgan: string; ketgan?: string | null };
 /** JShShIR saqlanmaydi: korxona ichida takrorlanmas kalit sifatida faqat xeshi olinadi */
 const workerKey = (w: Worker) => createHash("sha256").update(`${s(w.jshshir, 20).replace(/\D/g, "") || `${s(w.fio, 200).toLowerCase()}|${w.kirgan}`}`).digest("hex").slice(0, 32);
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
   if (!authorized(req)) return Response.json({ ok: false, error: "forbidden" }, { status: 403 });
   let body: {
     letters?: Letter[]; ehf?: Ehf[]; leases?: Lease[];
-    bojxona_qarz?: CustomsDebt[]; tif_shartnomalar?: Contract[]; deklaratsiyalar?: Declaration[]; xodimlar?: Worker[];
+    bojxona_qarz?: CustomsDebt[]; tif_shartnomalar?: Contract[]; deklaratsiyalar?: Declaration[]; xodimlar?: Worker[]; ai_soliq?: AiSoliqIn[];
   };
   try {
     body = await req.json();
@@ -135,6 +136,21 @@ export async function POST(req: Request) {
     };
     const { company_id: _c, kalit: _k, ...upd } = row;
     await sql`INSERT INTO workers ${sql(row)} ON CONFLICT (company_id, kalit) DO UPDATE SET ${sql(upd)}`;
+    touched.add(id);
+  }
+
+  // ai.soliq.uz: Ekspress audit, AI Avtokameral, AI EHF, AI Reyting, AI Imtiyoz xulosalari (korxona bo'yicha oxirgi holat)
+  const list = (v: unknown, n = 30) => (Array.isArray(v) ? v.map((x) => s(x, 500)).filter(Boolean).slice(0, n) : []);
+  for (const a of (body.ai_soliq ?? []).slice(0, 2000)) {
+    const id = cid(a.stir);
+    if (!id) continue;
+    const row = {
+      company_id: id, sana: isDate(a.sana) ? a.sana : new Date().toISOString().slice(0, 10), reyting: s(a.reyting, 20),
+      qarz: Math.max(0, num(a.qarz)), kamchiliklar: sql.json(list(a.kamchiliklar)), avtokameral: sql.json(list(a.avtokameral)),
+      ehf_xavfli: Math.max(0, Math.round(num(a.ehf_xavfli))), imtiyozlar: sql.json(list(a.imtiyozlar)), yangilangan: new Date(),
+    };
+    const { company_id: _c, ...upd } = row;
+    await sql`INSERT INTO ai_soliq ${sql(row)} ON CONFLICT (company_id) DO UPDATE SET ${sql(upd)}`;
     touched.add(id);
   }
 
