@@ -5,6 +5,7 @@ import { setting } from "@/lib/db";
 import { getT } from "@/lib/i18n";
 import { Prefs } from "@/components/Prefs";
 import { Bell } from "@/components/Bell";
+import { HistoryNav } from "@/components/HistoryNav";
 import { Crumb, Nav } from "./nav";
 import { NAV } from "@/lib/nav";
 import { dateUz } from "@/lib/format";
@@ -44,7 +45,8 @@ export default async function PanelLayout({ children }: { children: React.ReactN
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-14 items-center justify-between gap-3 bg-side px-4 text-side-ink print:hidden md:px-6">
-          <div className="flex min-w-0 items-baseline gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <HistoryNav back={t("Orqaga")} forward={t("Oldinga")} />
             <Crumb items={items} />
             <span className="hidden shrink-0 text-xs text-side-muted sm:inline">{t("Bugun")} {dateUz(iso(todayTashkent()))}</span>
           </div>

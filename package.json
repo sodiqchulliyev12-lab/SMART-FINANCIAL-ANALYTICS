@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "migrate": "tsx scripts/migrate.ts",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "demo:tozalash": "tsx scripts/demo-tozalash.ts"
   },
   "dependencies": {
     "@types/node": "22.15.0",
