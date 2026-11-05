@@ -30,7 +30,7 @@ export const DEFAULT_TAX_TYPES: TaxType[] = [
   { code: "jshds", nomi: "JShDS va ijtimoiy soliq", davr: "oy", oy_offset: 1, kun: 15 },
   { code: "foyda", nomi: "Foyda solig'i (chorak)", davr: "chorak", oy_offset: 1, kun: 20 },
   { code: "foyda_yil", nomi: "Foyda solig'i (yillik)", davr: "yil", oy_offset: 3, kun: 1 },
-  { code: "moliyaviy", nomi: "Moliyaviy hisobot (chorak)", davr: "chorak", oy_offset: 1, kun: 25 },
+  { code: "moliyaviy", nomi: "Moliyaviy hisobot (yillik: balans va moliyaviy natijalar)", davr: "yil", oy_offset: 2, kun: 15 },
   { code: "mol_mulk", nomi: "Mol-mulk solig'i (yillik)", davr: "yil", oy_offset: 3, kun: 1 },
   { code: "yer", nomi: "Yer solig'i (yillik)", davr: "yil", oy_offset: 2, kun: 1 },
   ...STAT_TYPES(),

@@ -243,6 +243,7 @@ export const RU: Record<string, string> = {
   "Mehnat tizimida faol xodim yo'q": "В системе труда нет работающих",
   "Mol-mulk solig'i (yillik)": "Налог на имущество (год)",
   "Moliyaviy hisobot (chorak)": "Финансовая отчётность (квартал)",
+  "Moliyaviy hisobot (yillik: balans va moliyaviy natijalar)": "Финансовая отчётность (годовая: баланс и отчёт о финансовых результатах)",
   "Moliyaviy ma'lumot eskirgan": "Финансовые данные устарели",
   "Moliyaviy ma'lumot kiritilmagan": "Финансовые данные не введены",
   "Moliyaviy ma'lumot yo'q. Quyida choraklik balans ko'rsatkichlarini kiriting yoki CSV yuklang.": "Финансовых данных нет. Введите квартальные показатели баланса ниже или загрузите CSV.",
