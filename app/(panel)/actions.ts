@@ -188,7 +188,7 @@ export async function addLetter(f: FormData) {
   if (!raqam || !sana) back("/xatlar/", { xato: "Raqam va sanani kiriting" });
   const row = { company_id: cid, tur: str(f, "tur", 60) || "Xat", raqam, sana, mazmun: str(f, "mazmun", 2000), javob_muddati: date(f, "javob_muddati") };
   const sql = db();
-  await sql`INSERT INTO letters ${sql(row)} ON CONFLICT (company_id, raqam) DO UPDATE SET tur = EXCLUDED.tur, sana = EXCLUDED.sana, mazmun = EXCLUDED.mazmun, javob_muddati = EXCLUDED.javob_muddati`;
+  await sql`INSERT INTO letters ${sql(row)} ON CONFLICT (company_id, tur, raqam) DO UPDATE SET sana = EXCLUDED.sana, mazmun = EXCLUDED.mazmun, javob_muddati = EXCLUDED.javob_muddati`;
   await audit(u.id, "xat", `companies:${cid}`, row);
   await afterChange(cid, "/xatlar/");
   back("/xatlar/", { ok: "Xat ro'yxatga olindi" });

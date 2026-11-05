@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     const jm = isDate(l.javob_muddati) ? l.javob_muddati : null;
     const [r] = await sql`INSERT INTO letters (company_id, tur, raqam, sana, mazmun, javob_muddati, manba)
       VALUES (${id}, ${s(l.tur, 60) || "Xat"}, ${s(l.raqam, 50)}, ${l.sana}, ${s(l.mazmun, 2000)}, ${jm}, 'monitor')
-      ON CONFLICT (company_id, raqam) DO UPDATE SET tur = EXCLUDED.tur, mazmun = EXCLUDED.mazmun, javob_muddati = EXCLUDED.javob_muddati
+      ON CONFLICT (company_id, tur, raqam) DO UPDATE SET sana = EXCLUDED.sana, mazmun = EXCLUDED.mazmun, javob_muddati = EXCLUDED.javob_muddati
       RETURNING (xmax = 0) AS inserted`;
     if (r.inserted) newLetters.push({ company_id: id, tur: s(l.tur, 60) || "Xat", raqam: s(l.raqam, 50), javob_muddati: jm });
     touched.add(id);
