@@ -20,6 +20,8 @@ type Declaration = {
   valyuta?: string; summa?: number; boj_tolov?: number; holati?: string;
 };
 type AiSoliqIn = { stir: string; sana?: string; reyting?: string; qarz?: number; kamchiliklar?: string[]; avtokameral?: string[]; ehf_xavfli?: number; imtiyozlar?: string[] };
+/** my.soliq.uz: topshirilgan hisobotlar reestri va to'lovlar. soliq: tax_types.code; davr: "2026-06" | "2026-Q2" | "2026" */
+type ReportIn = { stir: string; soliq: string; davr: string; topshirildi?: boolean; tolandi?: boolean };
 type Worker = { stir: string; jshshir?: string; fio?: string; lavozim?: string; shartnoma?: string; kirgan: string; ketgan?: string | null };
 /** JShShIR saqlanmaydi: korxona ichida takrorlanmas kalit sifatida faqat xeshi olinadi */
 const workerKey = (w: Worker) => createHash("sha256").update(`${s(w.jshshir, 20).replace(/\D/g, "") || `${s(w.fio, 200).toLowerCase()}|${w.kirgan}`}`).digest("hex").slice(0, 32);
@@ -41,7 +43,7 @@ export async function POST(req: Request) {
   if (!authorized(req)) return Response.json({ ok: false, error: "forbidden" }, { status: 403 });
   let body: {
     letters?: Letter[]; ehf?: Ehf[]; leases?: Lease[];
-    bojxona_qarz?: CustomsDebt[]; tif_shartnomalar?: Contract[]; deklaratsiyalar?: Declaration[]; xodimlar?: Worker[]; ai_soliq?: AiSoliqIn[];
+    bojxona_qarz?: CustomsDebt[]; tif_shartnomalar?: Contract[]; deklaratsiyalar?: Declaration[]; xodimlar?: Worker[]; ai_soliq?: AiSoliqIn[]; hisobotlar?: ReportIn[];
   };
   try {
     body = await req.json();
@@ -154,8 +156,23 @@ export async function POST(req: Request) {
     touched.add(id);
   }
 
+  // Hisobot va to'lov holati: faqat "topshirildi"/"to'landi" tomonga o'zgartiriladi, qo'lda qo'yilgan belgilar o'chirilmaydi
+  let hisobotlar = 0;
+  for (const r of (body.hisobotlar ?? []).slice(0, 20000)) {
+    const id = cid(r.stir);
+    const davr = s(r.davr, 10);
+    if (!id || !/^\d{4}(-(0[1-9]|1[0-2]|Q[1-4]))?$/.test(davr)) continue;
+    const res = await sql`UPDATE deadlines SET
+        hisobot_holati = CASE WHEN ${r.topshirildi === true} THEN 'topshirildi' ELSE hisobot_holati END,
+        tolov_holati = CASE WHEN ${r.tolandi === true} AND tolov_holati = 'kutilmoqda' THEN 'tolandi' ELSE tolov_holati END,
+        belgiladi_id = NULL, belgi_vaqt = now()
+      WHERE company_id = ${id} AND soliq = ${s(r.soliq, 40)} AND davr = ${davr}
+        AND ((${r.topshirildi === true} AND hisobot_holati <> 'topshirildi') OR (${r.tolandi === true} AND tolov_holati = 'kutilmoqda'))`;
+    if (res.count) { hisobotlar += res.count; touched.add(id); }
+  }
+
   for (const id of touched) await recomputeRisk(id);
   await audit(null, "monitor", "api", { korxonalar: touched.size, yangi_xatlar: newLetters.length, topilmagan: [...new Set(skipped)].slice(0, 20) });
   if (newLetters.length) await notifyNewLetters(newLetters).catch((e) => console.error("[monitor] xabar yuborilmadi:", e));
-  return Response.json({ ok: true, companies: touched.size, new_letters: newLetters.length, unknown_stir: [...new Set(skipped)] });
+  return Response.json({ ok: true, companies: touched.size, new_letters: newLetters.length, reports_marked: hisobotlar, unknown_stir: [...new Set(skipped)] });
 }
