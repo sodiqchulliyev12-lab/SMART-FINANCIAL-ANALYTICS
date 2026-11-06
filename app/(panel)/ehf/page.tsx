@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { dateUz, som } from "@/lib/format";
 import { companyOptions, scopeSql } from "@/lib/scope";
 import { iso, todayTashkent, daysBetween, parseIso } from "@/lib/tax-calendar";
-import { AddButton, Card, Field, Notice, PageTitle, Pill, Select, Table } from "@/components/ui";
+import { AddBox, Card, Field, Notice, PageTitle, Pill, Select, Table } from "@/components/ui";
 import { addEhf, setEhfStatus } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -28,23 +28,24 @@ export default async function Ehf({ searchParams }: { searchParams: Promise<{ ha
   return (
     <>
       <PageTitle section title="Elektron hisob-fakturalar" sub="Didox'da imzo kutayotgan fakturalar. 5 kundan uzoq kutgan va xavfli kontragentli fakturalar riskni oshiradi."
-        right={<div className="flex items-center gap-2"><Link href={all ? "/ehf/" : "/ehf/?hammasi=1"} className="btn-ghost">{t(all ? "Faqat imzo kutayotganlar" : "Hammasi")}</Link>{opts.length > 0 && (
-    <AddButton title="EHF qo'shish">
-      <form action={addEhf} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Select label="Korxona" name="company_id" options={opts} required />
-        <Field label="Faktura raqami" name="raqam" required />
-        <Field label="Sana" name="sana" type="date" defaultValue={iso(today)} required />
-        <Field label="Kontragent" name="kontragent" required />
-        <Field label="Kontragent STIR" name="kontragent_stir" />
-        <Field label="Summa (QQS bilan)" name="summa" required />
-        <Select label="Yo'nalish" name="yonalish" options={[["kiruvchi", "Kiruvchi"], ["chiquvchi", "Chiquvchi"]]} />
-        <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" name="xavfli" /> {t("Kontragent yuqori tavakkalchilikda")}</label>
-        <div><button className="btn">{t("Saqlash")}</button></div>
-      </form>
-    </AddButton>
-  )}</div>} />
+        right={<Link href={all ? "/ehf/" : "/ehf/?hammasi=1"} className="btn-ghost">{t(all ? "Faqat imzo kutayotganlar" : "Hammasi")}</Link>} />
       {sp.ok && <Notice>{sp.ok}</Notice>}
       {sp.xato && <Notice kind="err">{sp.xato}</Notice>}
+      {opts.length > 0 && (
+        <AddBox title="EHF qo'shish">
+          <form action={addEhf} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Select label="Korxona" name="company_id" options={opts} required />
+            <Field label="Faktura raqami" name="raqam" required />
+            <Field label="Sana" name="sana" type="date" defaultValue={iso(today)} required />
+            <Field label="Kontragent" name="kontragent" required />
+            <Field label="Kontragent STIR" name="kontragent_stir" />
+            <Field label="Summa (QQS bilan)" name="summa" required />
+            <Select label="Yo'nalish" name="yonalish" options={[["kiruvchi", "Kiruvchi"], ["chiquvchi", "Chiquvchi"]]} />
+            <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" name="xavfli" /> {t("Kontragent yuqori tavakkalchilikda")}</label>
+            <div><button className="btn">{t("Saqlash")}</button></div>
+          </form>
+        </AddBox>
+      )}
       <Card>
         <Table head={["Korxona", "Faktura", "Kontragent", "Summa", "Kutmoqda", "Amal"]} align={["l", "l", "l", "r", "l", "l"]}>
           {rows.map((e) => {

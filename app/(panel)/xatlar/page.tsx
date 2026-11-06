@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { dateUz } from "@/lib/format";
 import { companyOptions, scopeSql } from "@/lib/scope";
 import { iso, todayTashkent } from "@/lib/tax-calendar";
-import { AddButton, Card, Field, Notice, PageTitle, Pill, Select, Table } from "@/components/ui";
+import { AddBox, Card, Field, Notice, PageTitle, Pill, Select, Table } from "@/components/ui";
 import { addLetter, setLetterStatus } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -29,21 +29,22 @@ export default async function Letters({ searchParams }: { searchParams: Promise<
   return (
     <>
       <PageTitle title="Soliq xatlari" sub="my.soliq.uz kabinetidagi talabnoma, xabarnoma va qarorlar. Monitor ulansa, avtomatik tushadi."
-        right={<div className="flex items-center gap-2"><Link href={all ? "/xatlar/" : "/xatlar/?hammasi=1"} className="btn-ghost">{t(all ? "Faqat ochiqlar" : "Hammasi")}</Link>{opts.length > 0 && (
-    <AddButton title="Xatni ro'yxatga olish">
-      <form action={addLetter} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Select label="Korxona" name="company_id" options={opts} required />
-        <Select label="Turi" name="tur" options={TURLAR.map((x) => [x, x])} />
-        <Field label="Raqami" name="raqam" required />
-        <Field label="Sanasi" name="sana" type="date" defaultValue={today} required />
-        <Field label="Javob muddati" name="javob_muddati" type="date" />
-        <Field label="Qisqa mazmuni" name="mazmun" />
-        <div><button className="btn">{t("Saqlash")}</button></div>
-      </form>
-    </AddButton>
-  )}</div>} />
+        right={<Link href={all ? "/xatlar/" : "/xatlar/?hammasi=1"} className="btn-ghost">{t(all ? "Faqat ochiqlar" : "Hammasi")}</Link>} />
       {sp.ok && <Notice>{sp.ok}</Notice>}
       {sp.xato && <Notice kind="err">{sp.xato}</Notice>}
+      {opts.length > 0 && (
+        <AddBox title="Xatni ro'yxatga olish">
+          <form action={addLetter} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Select label="Korxona" name="company_id" options={opts} required />
+            <Select label="Turi" name="tur" options={TURLAR.map((x) => [x, x])} />
+            <Field label="Raqami" name="raqam" required />
+            <Field label="Sanasi" name="sana" type="date" defaultValue={today} required />
+            <Field label="Javob muddati" name="javob_muddati" type="date" />
+            <Field label="Qisqa mazmuni" name="mazmun" />
+            <div><button className="btn">{t("Saqlash")}</button></div>
+          </form>
+        </AddBox>
+      )}
       <Card>
         <Table head={["Korxona", "Xat", "Sana", "Javob muddati", "Holat"]}>
           {rows.map((l) => {

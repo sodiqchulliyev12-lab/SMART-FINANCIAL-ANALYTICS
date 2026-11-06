@@ -196,21 +196,6 @@ export async function AddBox({ title, children, open }: { title: string; childre
   );
 }
 
-// Ixcham "+" tugma: bosilganda forma tugma ostida ochiladi. Avtomatik to'ldiriladigan bo'limlar uchun.
-export async function AddButton({ title, children }: { title: string; children: ReactNode }) {
-  const t = await getT();
-  return (
-    <details className="relative [&_summary::-webkit-details-marker]:hidden">
-      <summary title={t(title)} aria-label={t(title)}
-        className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-lg border border-ink-200 bg-surface text-xl leading-none text-brand-700 hover:bg-brand-50">＋</summary>
-      <div className="absolute right-0 z-30 mt-2 w-[min(92vw,44rem)] rounded-xl border border-ink-200 bg-surface p-4 shadow-xl">
-        <div className="mb-3 text-sm font-medium">{t(title)}</div>
-        {children}
-      </div>
-    </details>
-  );
-}
-
 export async function Notice({ kind = "ok", children }: { kind?: "ok" | "err"; children: ReactNode }) {
   const t = await getT();
   return (

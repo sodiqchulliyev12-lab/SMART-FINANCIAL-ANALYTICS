@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { dateUz } from "@/lib/format";
 import { companyOptions, scopeSql } from "@/lib/scope";
 import { daysBetween, parseIso, todayTashkent } from "@/lib/tax-calendar";
-import { AddButton, Card, Field, Notice, PageTitle, Pill, Select, Table } from "@/components/ui";
+import { AddBox, Card, Field, Notice, PageTitle, Pill, Select, Table } from "@/components/ui";
 import { addLease, setLeaseStatus } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -23,21 +23,21 @@ export default async function Leases({ searchParams }: { searchParams: Promise<{
   ]);
   return (
     <>
-      <PageTitle section title="Ijara shartnomalari" sub="ijara.soliq.uz'dagi shartnomalar. Tugashiga 30 kun qolganda va tugagach risk paneli ogohlantiradi."
-        right={opts.length > 0 && (
-    <AddButton title="Shartnoma qo'shish">
-      <form action={addLease} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Select label="Korxona" name="company_id" options={opts} required />
-        <Field label="Shartnoma raqami" name="raqam" required />
-        <Field label="Ikkinchi tomon" name="tomon" />
-        <Field label="Boshlanish" name="boshlanish" type="date" required />
-        <Field label="Tugash" name="tugash" type="date" required />
-        <div className="self-end"><button className="btn">{t("Saqlash")}</button></div>
-      </form>
-    </AddButton>
-  )} />
+      <PageTitle section title="Ijara shartnomalari" sub="ijara.soliq.uz'dagi shartnomalar. Tugashiga 30 kun qolganda va tugagach risk paneli ogohlantiradi." />
       {sp.ok && <Notice>{sp.ok}</Notice>}
       {sp.xato && <Notice kind="err">{sp.xato}</Notice>}
+      {opts.length > 0 && (
+        <AddBox title="Shartnoma qo'shish">
+          <form action={addLease} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Select label="Korxona" name="company_id" options={opts} required />
+            <Field label="Shartnoma raqami" name="raqam" required />
+            <Field label="Ikkinchi tomon" name="tomon" />
+            <Field label="Boshlanish" name="boshlanish" type="date" required />
+            <Field label="Tugash" name="tugash" type="date" required />
+            <div className="self-end"><button className="btn">{t("Saqlash")}</button></div>
+          </form>
+        </AddBox>
+      )}
       <Card>
         <Table head={["Korxona", "Shartnoma", "Muddat", "Qoldi", "Holat"]}>
           {rows.map((l) => {
