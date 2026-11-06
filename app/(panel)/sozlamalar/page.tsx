@@ -62,7 +62,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                       {x.izoh && <p className="mt-1 text-xs text-ink-500">{t(x.izoh)}</p>}
                     </div>
                     <span className="text-sm text-ink-700">{t(DAVR[x.davr])}</span>
-                    <input name="oy_offset" type="number" min={0} max={12} defaultValue={x.oy_offset} className="input" aria-label={t("Oy siljishi")} />
+                    <input name="oy_offset" type="number" min={-11} max={12} defaultValue={x.oy_offset} className="input" aria-label={t("Oy siljishi")} />
                     <input name="kun" type="number" min={1} max={31} defaultValue={x.kun} className="input" aria-label={t("Kun")} />
                     <button className="btn-sm">{t("Saqlash")}</button>
                   </form>

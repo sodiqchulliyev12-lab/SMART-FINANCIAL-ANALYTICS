@@ -453,7 +453,7 @@ export async function addTaxType(f: FormData) {
   const kun = Number(f.get("kun"));
   const oy = Number(f.get("oy_offset"));
   if (!nomi || !["oy", "chorak", "yil"].includes(davr)) back("/sozlamalar/", { xato: "Nomi va davrni kiriting" });
-  if (!(kun >= 1 && kun <= 31 && oy >= 0 && oy <= 12)) back("/sozlamalar/", { xato: "Kun 1–31, oy siljishi 0–12 bo'lsin" });
+  if (!(kun >= 1 && kun <= 31 && oy >= -11 && oy <= 12)) back("/sozlamalar/", { xato: "Kun 1–31, oy siljishi -11…12 bo'lsin" });
   const code = `${turi === "statistika" ? "st" : "sq"}_${Date.now().toString(36)}`;
   await db()`INSERT INTO tax_types (code, nomi, davr, oy_offset, kun, turi, izoh) VALUES (${code}, ${nomi}, ${davr}, ${oy}, ${kun}, ${turi}, ${str(f, "izoh", 500)})`;
   await audit(u.id, "soliq_turi_qoshildi", `tax_types:${code}`, { nomi, davr, turi });
@@ -466,7 +466,7 @@ export async function saveTaxType(f: FormData) {
   const code = str(f, "code", 40);
   const kun = Number(f.get("kun"));
   const oy = Number(f.get("oy_offset"));
-  if (!(kun >= 1 && kun <= 31 && oy >= 0 && oy <= 12)) back("/sozlamalar/", { xato: "Kun 1–31, oy siljishi 0–12 bo'lsin" });
+  if (!(kun >= 1 && kun <= 31 && oy >= -11 && oy <= 12)) back("/sozlamalar/", { xato: "Kun 1–31, oy siljishi -11…12 bo'lsin" });
   await db()`UPDATE tax_types SET nomi = ${str(f, "nomi", 100)}, kun = ${kun}, oy_offset = ${oy} WHERE code = ${code}`;
   await audit(u.id, "soliq_turi", `tax_types:${code}`, { kun, oy });
   await generateDeadlines();
