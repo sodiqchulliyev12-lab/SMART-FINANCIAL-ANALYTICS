@@ -29,7 +29,7 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
   const t = await getT();
   const L = t.lang;
 
-  const [risk, fin, history, deadlines, letters, types, linked, staff] = await Promise.all([
+  const [risk, fin, history, deadlines, letters, types, linked, staff, aiRows] = await Promise.all([
     recomputeRisk(id, today),
     financialsOf(id),
     riskHistory(id),
@@ -41,7 +41,9 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
     taxTypes(),
     sql`SELECT soliq FROM company_taxes WHERE company_id = ${id}`,
     u.role === "admin" ? sql<{ id: number; fio: string }[]>`SELECT id, fio FROM users WHERE active ORDER BY fio` : Promise.resolve([]),
+    sql`SELECT to_char(sana,'YYYY-MM-DD') AS sana, reyting, qarz, kamchiliklar, avtokameral, ehf_xavfli, imtiyozlar FROM ai_soliq WHERE company_id = ${id}`,
   ]);
+  const ai = aiRows[0] as { sana: string; reyting: string; qarz: string; kamchiliklar: string[]; avtokameral: string[]; ehf_xavfli: number; imtiyozlar: string[] } | undefined;
   const r = risk!;
   const last = fin[fin.length - 1];
   const rt = last ? ratios(last) : null;
@@ -93,6 +95,38 @@ export default async function CompanyPage({ params, searchParams }: { params: Pr
           )}
         </Card>
       </div>
+
+      {/* AI Soliq (ai.soliq.uz) xulosasi */}
+      <Card title="AI Soliq xulosasi" className="mt-6" right={<a href="https://ai.soliq.uz/" target="_blank" rel="noreferrer" className="text-xs link">ai.soliq.uz ↗</a>}>
+        {!ai ? (
+          <p className="text-sm text-ink-500">{t("Hali ma'lumot yo'q. Ofisdagi yig'uvchi dastur ERI bilan ai.soliq.uz'ga kirib, Ekspress audit, AI Avtokameral, AI EHF, AI Reyting va AI Imtiyoz natijalarini shu yerga yuboradi.")}</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+              {[
+                ["Barqarorlik reytingi", ai.reyting || "—", ""],
+                ["Soliq qarzi", Number(ai.qarz) > 0 ? som(Number(ai.qarz)) : "0", Number(ai.qarz) > 0 ? "text-red-600" : "text-emerald-600"],
+                ["Avtokameral nomuvofiqliklari", String(ai.avtokameral.length), ai.avtokameral.length ? "text-red-600" : "text-emerald-600"],
+                ["Xavfli EHF", String(ai.ehf_xavfli), ai.ehf_xavfli ? "text-amber-600" : "text-emerald-600"],
+              ].map(([label, value, cls]) => (
+                <div key={label} className="rounded-lg border border-ink-100 px-3 py-2">
+                  <div className="text-xs text-ink-500">{t(label)}</div>
+                  <div className={`text-lg font-semibold tabular-nums ${cls}`}>{value}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              {([["Kamchiliklar va tavsiyalar", ai.kamchiliklar], ["Avtokameral nomuvofiqliklari", ai.avtokameral], ["Foydalanish mumkin bo'lgan imtiyozlar", ai.imtiyozlar]] as const).map(([h, list]) => (
+                <div key={h}>
+                  <div className="mb-1 text-xs font-medium text-ink-700">{t(h)}</div>
+                  {list.length ? <ul className="list-disc space-y-1 pl-4 text-sm text-ink-700">{list.map((x, i) => <li key={i}>{x}</li>)}</ul> : <p className="text-sm text-ink-500">—</p>}
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs text-ink-500">{t("Tekshirilgan")}: {dateUz(ai.sana)} · {t("AI tavsiyalari maslahat xarakterida, yakuniy qaror buxgalterda.")}</p>
+          </>
+        )}
+      </Card>
 
       {/* Moliyaviy tahlil */}
       <section id="moliya" className="mt-6 scroll-mt-6">

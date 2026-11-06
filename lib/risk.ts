@@ -60,7 +60,11 @@ export type RiskInput = {
   /** contract.customs.uz: faol tashqi savdo shartnomalari */
   contracts?: TifContract[];
   financials: Financials[]; // davr bo'yicha o'sish tartibida
+  /** ai.soliq.uz xulosalari (Ekspress audit, AI Avtokameral, AI EHF); null — ma'lumot yo'q */
+  aiSoliq?: AiSoliq | null;
 };
+
+export type AiSoliq = { qarz: number; kamchiliklar: string[]; avtokameral: string[]; ehfXavfli: number };
 
 export type WorkforceStats = { active: number; hired90: number; left90: number };
 
@@ -387,6 +391,39 @@ export function assessRisk(input: RiskInput): RiskResult {
         tavsiya: "Ommaviy ketish faoliyat qisqarayotganini yoki ish haqi muammosini bildirishi mumkin. Ish haqi qarzi va hisob-kitoblarni tekshiring.",
       });
     }
+  }
+
+  // ── AI Soliq (ai.soliq.uz) ──────────────────────────────────
+  const ai = input.aiSoliq;
+  if (ai && ai.avtokameral.length > 0) {
+    add({
+      code: "ai_avtokameral",
+      group: "soliq",
+      title: "AI Avtokameral nomuvofiqlik topgan",
+      detail: `${ai.avtokameral.length} ta mezon: ${ai.avtokameral.slice(0, 3).join("; ")}`,
+      points: 15,
+      tavsiya: "Kameral tekshiruvdan oldin nomuvofiqlikni o'zingiz tuzating: tuzatuvchi hisobot topshirilsa, jarimasiz yopiladi. Sababini ai.soliq.uz'dagi AI Avtokameral bo'limida ko'ring.",
+    });
+  }
+  if (ai && (ai.kamchiliklar.length > 0 || ai.qarz > 0)) {
+    add({
+      code: "ai_ekspress_audit",
+      group: "soliq",
+      title: "Ekspress auditda kamchiliklar bor",
+      detail: [ai.qarz > 0 ? `Qarz: ${fmtSom(ai.qarz)}` : "", ai.kamchiliklar.slice(0, 3).join("; ")].filter(Boolean).join(". "),
+      points: ai.qarz > 0 ? 12 : 8,
+      tavsiya: "ai.soliq.uz'dagi Ekspress audit tavsiyalarini bajaring: qarzni yoping, bank hisobvarag'i bo'yicha cheklovlarni va majburiyat bilan to'lov orasidagi farqni bartaraf eting.",
+    });
+  }
+  if (ai && ai.ehfXavfli > 0) {
+    add({
+      code: "ai_ehf",
+      group: "shartnoma",
+      title: "AI EHF xavfli fakturalarni belgilagan",
+      detail: `${ai.ehfXavfli} ta faktura qizil belgilangan`,
+      points: ai.ehfXavfli >= 5 ? 10 : 6,
+      tavsiya: "Belgilangan fakturalar bo'yicha kontragentni tekshiring (karusel sxema, naqdlashtirish belgilari). Asossiz bo'lsa, hujjatlarni tayyorlab qo'ying.",
+    });
   }
 
   // ── Bojxona ─────────────────────────────────────────────────

@@ -6,10 +6,10 @@ import { levelLabel, levelOf, type RiskLevel } from "@/lib/risk";
 // Komponentlar matnli prop'larni (sarlavha, yorliq, izoh) o'zi tarjima qiladi: sahifalarda o'zbekcha yozish kifoya.
 const tr = (t: T, v: ReactNode) => (typeof v === "string" ? t(v) : v);
 
-export async function PageTitle({ title, sub, right }: { title: string; sub?: ReactNode; right?: ReactNode }) {
+export async function PageTitle({ title, sub, right, section }: { title: string; sub?: ReactNode; right?: ReactNode; section?: boolean }) {
   const t = await getT();
   // Bo'lim nomi tepa qatorda turadi: bu yerda takrorlamaymiz, faqat izoh va tugmalar qoladi.
-  if (NAV_LABELS.has(title)) {
+  if (section || NAV_LABELS.has(title)) {
     return (
       <>
         <h1 className="sr-only">{t(title)}</h1>

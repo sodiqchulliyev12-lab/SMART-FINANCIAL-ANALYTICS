@@ -12,6 +12,7 @@ import {
 } from "@/lib/analytics";
 import { C, Donut, HBars, Kpi, StackBars, VBars } from "@/components/charts";
 import { Card, LEVEL_STYLE, Notice, PageTitle } from "@/components/ui";
+import { FilterBar } from "@/components/FilterBar";
 
 export const dynamic = "force-dynamic";
 
@@ -144,10 +145,7 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <PageTitle title="Moliyaviy tahlil" sub={`${periodLabel} · ${t("korxonalar: {n}", { n: cos.length })}${snap[0].d ? ` · ${t("yangilangan")} ${dateUz(snap[0].d)}` : ""}`} />
-
-      <form className="mb-5 grid grid-cols-2 gap-3 rounded-xl border border-ink-100 bg-surface p-4 shadow-sm lg:grid-cols-[repeat(5,minmax(0,1fr))_auto]" aria-label={t("Filtr")}>
-        {drill && <input type="hidden" name="p" value="chorak" />}
+      <PageTitle title="Moliyaviy tahlil" right={<FilterBar search={false} hidden={{ p: drill ? "chorak" : null }} active={[sp.y, qn, k, r, m].filter((v) => v !== null && v !== undefined && v !== "").length} clearHref="/tahlil/">
         <div>
           <label className="label" htmlFor="y">{t("Yil")}</label>
           <select id="y" name="y" defaultValue={sp.y ? y : ""} className="input">
@@ -162,7 +160,7 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
             {[1, 2, 3, 4].map((q) => <option key={q} value={q}>{q}-{t("chorak")}</option>)}
           </select>
         </div>
-        <div className="col-span-2 lg:col-span-1">
+        <div>
           <label className="label" htmlFor="k">{t("Korxona")}</label>
           <select id="k" name="k" defaultValue={k ?? ""} className="input">
             <option value="">{t("Barcha korxonalar")}</option>
@@ -184,12 +182,10 @@ export default async function Analytics({ searchParams }: { searchParams: Promis
               {staff.map((s) => <option key={s.id} value={s.id}>{s.fio}</option>)}
             </select>
           </div>
-        ) : <div className="hidden lg:block" />}
-        <div className="col-span-2 flex items-end gap-2 lg:col-span-1">
-          <button className="btn flex-1 lg:flex-none">{t("Ko'rsatish")}</button>
-          {filtered && <Link href="/tahlil/" className="btn-ghost">{t("Tozalash")}</Link>}
-        </div>
-      </form>
+        ) : null}
+        </FilterBar>} sub={`${periodLabel} · ${t("korxonalar: {n}", { n: cos.length })}${snap[0].d ? ` · ${t("yangilangan")} ${dateUz(snap[0].d)}` : ""}`} />
+
+
 
       {!ids.length && <Notice kind="err">{t("Tanlangan filtr bo'yicha korxona yo'q.")}</Notice>}
       {ids.length > 0 && !fin.length && <Notice kind="err">{t("Moliyaviy ko'rsatkichlar hali kiritilmagan — korxona sahifasida chorak ma'lumotini kiriting yoki CSV yuklang.")}</Notice>}

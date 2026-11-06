@@ -19,6 +19,12 @@ type Declaration = {
   stir: string; raqam: string; sana: string; rejim?: string; turi?: string; shartnoma?: string;
   valyuta?: string; summa?: number; boj_tolov?: number; holati?: string;
 };
+type AiSoliqIn = { stir: string; sana?: string; reyting?: string; qarz?: number; kamchiliklar?: string[]; avtokameral?: string[]; ehf_xavfli?: number; imtiyozlar?: string[] };
+/** my.soliq.uz: topshirilgan hisobotlar reestri va to'lovlar. soliq: tax_types.code; davr: "2026-06" | "2026-Q2" | "2026" */
+/** Balans (1-shakl) va moliyaviy natijalar (2-shakl). Yillik hisobot davri "2025-Q4" deb yuboriladi */
+const FIN_COLS = ["tushum", "tannarx", "sof_foyda", "jami_aktiv", "joriy_aktiv", "pul", "debitorlik", "zaxira", "joriy_majburiyat", "uzoq_majburiyat", "kapital", "kreditorlik", "budjet_qarz", "soliq_tolangan"] as const;
+type FinIn = { stir: string; davr: string } & Partial<Record<(typeof FIN_COLS)[number], number>>;
+type ReportIn = { stir: string; soliq: string; davr: string; topshirildi?: boolean; tolandi?: boolean };
 type Worker = { stir: string; jshshir?: string; fio?: string; lavozim?: string; shartnoma?: string; kirgan: string; ketgan?: string | null };
 /** JShShIR saqlanmaydi: korxona ichida takrorlanmas kalit sifatida faqat xeshi olinadi */
 const workerKey = (w: Worker) => createHash("sha256").update(`${s(w.jshshir, 20).replace(/\D/g, "") || `${s(w.fio, 200).toLowerCase()}|${w.kirgan}`}`).digest("hex").slice(0, 32);
@@ -40,7 +46,7 @@ export async function POST(req: Request) {
   if (!authorized(req)) return Response.json({ ok: false, error: "forbidden" }, { status: 403 });
   let body: {
     letters?: Letter[]; ehf?: Ehf[]; leases?: Lease[];
-    bojxona_qarz?: CustomsDebt[]; tif_shartnomalar?: Contract[]; deklaratsiyalar?: Declaration[]; xodimlar?: Worker[];
+    bojxona_qarz?: CustomsDebt[]; tif_shartnomalar?: Contract[]; deklaratsiyalar?: Declaration[]; xodimlar?: Worker[]; ai_soliq?: AiSoliqIn[]; hisobotlar?: ReportIn[]; moliya?: FinIn[];
   };
   try {
     body = await req.json();
@@ -64,7 +70,7 @@ export async function POST(req: Request) {
     const jm = isDate(l.javob_muddati) ? l.javob_muddati : null;
     const [r] = await sql`INSERT INTO letters (company_id, tur, raqam, sana, mazmun, javob_muddati, manba)
       VALUES (${id}, ${s(l.tur, 60) || "Xat"}, ${s(l.raqam, 50)}, ${l.sana}, ${s(l.mazmun, 2000)}, ${jm}, 'monitor')
-      ON CONFLICT (company_id, raqam) DO UPDATE SET tur = EXCLUDED.tur, mazmun = EXCLUDED.mazmun, javob_muddati = EXCLUDED.javob_muddati
+      ON CONFLICT (company_id, tur, raqam) DO UPDATE SET sana = EXCLUDED.sana, mazmun = EXCLUDED.mazmun, javob_muddati = EXCLUDED.javob_muddati
       RETURNING (xmax = 0) AS inserted`;
     if (r.inserted) newLetters.push({ company_id: id, tur: s(l.tur, 60) || "Xat", raqam: s(l.raqam, 50), javob_muddati: jm });
     touched.add(id);
@@ -138,8 +144,53 @@ export async function POST(req: Request) {
     touched.add(id);
   }
 
+  // ai.soliq.uz: Ekspress audit, AI Avtokameral, AI EHF, AI Reyting, AI Imtiyoz xulosalari (korxona bo'yicha oxirgi holat)
+  const list = (v: unknown, n = 30) => (Array.isArray(v) ? v.map((x) => s(x, 500)).filter(Boolean).slice(0, n) : []);
+  for (const a of (body.ai_soliq ?? []).slice(0, 2000)) {
+    const id = cid(a.stir);
+    if (!id) continue;
+    const row = {
+      company_id: id, sana: isDate(a.sana) ? a.sana : new Date().toISOString().slice(0, 10), reyting: s(a.reyting, 20),
+      qarz: Math.max(0, num(a.qarz)), kamchiliklar: sql.json(list(a.kamchiliklar)), avtokameral: sql.json(list(a.avtokameral)),
+      ehf_xavfli: Math.max(0, Math.round(num(a.ehf_xavfli))), imtiyozlar: sql.json(list(a.imtiyozlar)), yangilangan: new Date(),
+    };
+    const { company_id: _c, ...upd } = row;
+    await sql`INSERT INTO ai_soliq ${sql(row)} ON CONFLICT (company_id) DO UPDATE SET ${sql(upd)}`;
+    touched.add(id);
+  }
+
+  // Hisobot va to'lov holati: faqat "topshirildi"/"to'landi" tomonga o'zgartiriladi, qo'lda qo'yilgan belgilar o'chirilmaydi
+  let hisobotlar = 0;
+  for (const r of (body.hisobotlar ?? []).slice(0, 20000)) {
+    const id = cid(r.stir);
+    const davr = s(r.davr, 10);
+    if (!id || !/^\d{4}(-(0[1-9]|1[0-2]|Q[1-4]))?$/.test(davr)) continue;
+    const res = await sql`UPDATE deadlines SET
+        hisobot_holati = CASE WHEN ${r.topshirildi === true} THEN 'topshirildi' ELSE hisobot_holati END,
+        tolov_holati = CASE WHEN ${r.tolandi === true} AND tolov_holati = 'kutilmoqda' THEN 'tolandi' ELSE tolov_holati END,
+        belgiladi_id = NULL, belgi_vaqt = now()
+      WHERE company_id = ${id} AND soliq = ${s(r.soliq, 40)} AND davr = ${davr}
+        AND ((${r.topshirildi === true} AND hisobot_holati <> 'topshirildi') OR (${r.tolandi === true} AND tolov_holati = 'kutilmoqda'))`;
+    if (res.count) { hisobotlar += res.count; touched.add(id); }
+  }
+
+  // Moliyaviy hisobot: faqat yuborilgan ustunlar yangilanadi
+  let moliya = 0;
+  for (const f of (body.moliya ?? []).slice(0, 500)) {
+    const id = cid(f.stir);
+    const davr = s(f.davr, 7);
+    if (!id || !/^\d{4}-Q[1-4]$/.test(davr)) continue;
+    const vals: Record<string, number> = {};
+    for (const c of FIN_COLS) if (f[c] !== undefined && f[c] !== null && Number.isFinite(Number(f[c]))) vals[c] = Number(f[c]);
+    if (!Object.keys(vals).length) continue;
+    await sql`INSERT INTO financials ${sql({ company_id: id, davr, ...vals })}
+      ON CONFLICT (company_id, davr) DO UPDATE SET ${sql(vals)}, updated_at = now()`;
+    moliya++;
+    touched.add(id);
+  }
+
   for (const id of touched) await recomputeRisk(id);
   await audit(null, "monitor", "api", { korxonalar: touched.size, yangi_xatlar: newLetters.length, topilmagan: [...new Set(skipped)].slice(0, 20) });
   if (newLetters.length) await notifyNewLetters(newLetters).catch((e) => console.error("[monitor] xabar yuborilmadi:", e));
-  return Response.json({ ok: true, companies: touched.size, new_letters: newLetters.length, unknown_stir: [...new Set(skipped)] });
+  return Response.json({ ok: true, companies: touched.size, new_letters: newLetters.length, reports_marked: hisobotlar, financials: moliya, unknown_stir: [...new Set(skipped)] });
 }

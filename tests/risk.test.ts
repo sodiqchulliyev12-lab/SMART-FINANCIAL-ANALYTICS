@@ -109,3 +109,14 @@ test("ishchilar: faol xodim yo'q va ko'p ketish", () => {
   assert.equal(f!.points, 10);
   assert.ok(!assessRisk(empty({ workforce: null })).factors.some((x) => x.code.startsWith("ishchi")));
 });
+
+test("AI Soliq: avtokameral, ekspress audit va AI EHF omillari", () => {
+  const none = assessRisk(empty({ aiSoliq: { qarz: 0, kamchiliklar: [], avtokameral: [], ehfXavfli: 0 } }));
+  assert.ok(!none.factors.some((f) => f.code.startsWith("ai_")), "bo'sh xulosa — omil yo'q");
+  const r = assessRisk(empty({ aiSoliq: { qarz: 1_200_000, kamchiliklar: ["Bank hisobvarag'i to'xtatilgan"], avtokameral: ["QQS: sotuv va EHF farqi"], ehfXavfli: 6 } }));
+  const by = Object.fromEntries(r.factors.map((f) => [f.code, f]));
+  assert.equal(by.ai_avtokameral.points, 15);
+  assert.equal(by.ai_ekspress_audit.points, 12);
+  assert.match(by.ai_ekspress_audit.detail, /Qarz: 1\s200\s000/);
+  assert.equal(by.ai_ehf.points, 10);
+});
