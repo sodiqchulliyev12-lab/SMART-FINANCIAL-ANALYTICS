@@ -6,7 +6,7 @@ import { dateUz } from "@/lib/format";
 import { turnover90 } from "@/lib/risk";
 import { companyOptions, scopeSql } from "@/lib/scope";
 import { addDays, iso, todayTashkent } from "@/lib/tax-calendar";
-import { AddBox, Card, Field, Notice, PageTitle, Pill, Select, Stat, Table } from "@/components/ui";
+import { AddButton, Card, Field, Notice, PageTitle, Pill, Select, Stat, Table } from "@/components/ui";
 import { dismissWorker, saveWorker } from "../actions";
 
 export const dynamic = "force-dynamic";
@@ -51,7 +51,20 @@ export default async function Workers({ searchParams }: { searchParams: Promise<
 
   return (
     <>
-      <PageTitle title="Ishchilar" sub="Korxonalarda kim ishlayapti, kim keldi, kim ketdi. Manba: my.mehnat.uz (Yagona milliy mehnat tizimi) yoki qo'lda kiritish." />
+      <PageTitle title="Ishchilar" sub="Korxonalarda kim ishlayapti, kim keldi, kim ketdi. Manba: my.mehnat.uz (Yagona milliy mehnat tizimi) yoki qo'lda kiritish."
+        right={opts.length > 0 && (
+    <AddButton title="Ishchini qo'lda qo'shish">
+      <form action={saveWorker} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Select label="Korxona" name="company_id" options={opts} defaultValue={sel ? String(sel) : undefined} required />
+        <Field label="F.I.Sh." name="fio" required />
+        <Field label="Lavozim" name="lavozim" />
+        <Select label="Shartnoma" name="shartnoma" options={[["muddatsiz", "Muddatsiz"], ["muddatli", "Muddatli"], ["o'rindosh", "O'rindoshlik"], ["fhsh", "Fuqarolik-huquqiy"]]} />
+        <Field label="Ishga kirgan" name="kirgan" type="date" required />
+        <Field label="Bo'shagan (agar ketgan bo'lsa)" name="ketgan" type="date" />
+        <div className="self-end"><button className="btn">{t("Saqlash")}</button></div>
+      </form>
+    </AddButton>
+  )} />
       {sp.ok && <Notice>{sp.ok}</Notice>}
       {sp.xato && <Notice kind="err">{sp.xato}</Notice>}
 
@@ -61,19 +74,6 @@ export default async function Workers({ searchParams }: { searchParams: Promise<
         <Stat label="30 kunda bo'shadi" value={tot.left30} tone={tot.left30 ? "warn" : "plain"} />
       </div>
 
-      {opts.length > 0 && (
-        <AddBox title="Ishchini qo'lda qo'shish">
-          <form action={saveWorker} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Select label="Korxona" name="company_id" options={opts} defaultValue={sel ? String(sel) : undefined} required />
-            <Field label="F.I.Sh." name="fio" required />
-            <Field label="Lavozim" name="lavozim" />
-            <Select label="Shartnoma" name="shartnoma" options={[["muddatsiz", "Muddatsiz"], ["muddatli", "Muddatli"], ["o'rindosh", "O'rindoshlik"], ["fhsh", "Fuqarolik-huquqiy"]]} />
-            <Field label="Ishga kirgan" name="kirgan" type="date" required />
-            <Field label="Bo'shagan (agar ketgan bo'lsa)" name="ketgan" type="date" />
-            <div className="self-end"><button className="btn">{t("Saqlash")}</button></div>
-          </form>
-        </AddBox>
-      )}
 
       <Card title="Korxonalar bo'yicha" className="mb-6">
         <Table head={["Korxona", "Hozir", "30 kunda +", "30 kunda −", "90 kunda ketish", ""]} align={["l", "r", "r", "r", "r", "r"]}>
