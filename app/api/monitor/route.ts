@@ -21,6 +21,9 @@ type Declaration = {
 };
 type AiSoliqIn = { stir: string; sana?: string; reyting?: string; qarz?: number; kamchiliklar?: string[]; avtokameral?: string[]; ehf_xavfli?: number; imtiyozlar?: string[] };
 /** my.soliq.uz: topshirilgan hisobotlar reestri va to'lovlar. soliq: tax_types.code; davr: "2026-06" | "2026-Q2" | "2026" */
+/** Balans (1-shakl) va moliyaviy natijalar (2-shakl). Yillik hisobot davri "2025-Q4" deb yuboriladi */
+const FIN_COLS = ["tushum", "tannarx", "sof_foyda", "jami_aktiv", "joriy_aktiv", "pul", "debitorlik", "zaxira", "joriy_majburiyat", "uzoq_majburiyat", "kapital", "kreditorlik", "budjet_qarz", "soliq_tolangan"] as const;
+type FinIn = { stir: string; davr: string } & Partial<Record<(typeof FIN_COLS)[number], number>>;
 type ReportIn = { stir: string; soliq: string; davr: string; topshirildi?: boolean; tolandi?: boolean };
 type Worker = { stir: string; jshshir?: string; fio?: string; lavozim?: string; shartnoma?: string; kirgan: string; ketgan?: string | null };
 /** JShShIR saqlanmaydi: korxona ichida takrorlanmas kalit sifatida faqat xeshi olinadi */
@@ -43,7 +46,7 @@ export async function POST(req: Request) {
   if (!authorized(req)) return Response.json({ ok: false, error: "forbidden" }, { status: 403 });
   let body: {
     letters?: Letter[]; ehf?: Ehf[]; leases?: Lease[];
-    bojxona_qarz?: CustomsDebt[]; tif_shartnomalar?: Contract[]; deklaratsiyalar?: Declaration[]; xodimlar?: Worker[]; ai_soliq?: AiSoliqIn[]; hisobotlar?: ReportIn[];
+    bojxona_qarz?: CustomsDebt[]; tif_shartnomalar?: Contract[]; deklaratsiyalar?: Declaration[]; xodimlar?: Worker[]; ai_soliq?: AiSoliqIn[]; hisobotlar?: ReportIn[]; moliya?: FinIn[];
   };
   try {
     body = await req.json();
@@ -171,8 +174,23 @@ export async function POST(req: Request) {
     if (res.count) { hisobotlar += res.count; touched.add(id); }
   }
 
+  // Moliyaviy hisobot: faqat yuborilgan ustunlar yangilanadi
+  let moliya = 0;
+  for (const f of (body.moliya ?? []).slice(0, 500)) {
+    const id = cid(f.stir);
+    const davr = s(f.davr, 7);
+    if (!id || !/^\d{4}-Q[1-4]$/.test(davr)) continue;
+    const vals: Record<string, number> = {};
+    for (const c of FIN_COLS) if (f[c] !== undefined && f[c] !== null && Number.isFinite(Number(f[c]))) vals[c] = Number(f[c]);
+    if (!Object.keys(vals).length) continue;
+    await sql`INSERT INTO financials ${sql({ company_id: id, davr, ...vals })}
+      ON CONFLICT (company_id, davr) DO UPDATE SET ${sql(vals)}, updated_at = now()`;
+    moliya++;
+    touched.add(id);
+  }
+
   for (const id of touched) await recomputeRisk(id);
   await audit(null, "monitor", "api", { korxonalar: touched.size, yangi_xatlar: newLetters.length, topilmagan: [...new Set(skipped)].slice(0, 20) });
   if (newLetters.length) await notifyNewLetters(newLetters).catch((e) => console.error("[monitor] xabar yuborilmadi:", e));
-  return Response.json({ ok: true, companies: touched.size, new_letters: newLetters.length, reports_marked: hisobotlar, unknown_stir: [...new Set(skipped)] });
+  return Response.json({ ok: true, companies: touched.size, new_letters: newLetters.length, reports_marked: hisobotlar, financials: moliya, unknown_stir: [...new Set(skipped)] });
 }
